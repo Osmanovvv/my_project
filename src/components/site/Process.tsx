@@ -1,34 +1,31 @@
+import { useLoaderData } from "@tanstack/react-router";
 import { Search, Layers, Rocket, TrendingUp } from "lucide-react";
 import { Mascot } from "./Mascot";
 
-const steps = [
-  {
-    n: "01",
-    icon: Search,
-    title: "Разбор",
-    text: "Созваниваемся, разбираем текущий поток заявок и что теряется.",
-  },
-  {
-    n: "02",
-    icon: Layers,
-    title: "Прототип",
-    text: "Показываем структуру сайта и как всё будет выглядеть в админке.",
-  },
-  {
-    n: "03",
-    icon: Rocket,
-    title: "Запуск",
-    text: "Собираем сайт, бота и админку. Подключаем уведомления менеджеру.",
-  },
-  {
-    n: "04",
-    icon: TrendingUp,
-    title: "Развитие",
-    text: "После запуска добавляем правила, интеграции, аналитику.",
-  },
-];
+/**
+ * Иконки и номера шагов остаются в коде, тексты приходят из админки.
+ *
+ * Количество шагов не меняется, и это ограничение вёрстки, а не лень:
+ * под четыре колонки заточены и сетка, и декоративный рельс поверх неё,
+ * а заголовок «Четыре шага без сюрпризов» начал бы врать. Пятый шаг —
+ * работа для разработчика, а не поле в форме.
+ */
+const SHAPE = [
+  { n: "01", icon: Search, key: "step1" },
+  { n: "02", icon: Layers, key: "step2" },
+  { n: "03", icon: Rocket, key: "step3" },
+  { n: "04", icon: TrendingUp, key: "step4" },
+] as const;
 
 export function Process() {
+  const { texts } = useLoaderData({ from: "__root__" });
+
+  const steps = SHAPE.map((shape) => ({
+    ...shape,
+    title: texts[`home.process.${shape.key}.title`],
+    text: texts[`home.process.${shape.key}.text`],
+  }));
+
   return (
     // `overflow-hidden` обязателен: маскот-вотермарк ниже висит на `-right-6`
     // и с md вылезал за правый край страницы, добавляя горизонтальный скролл

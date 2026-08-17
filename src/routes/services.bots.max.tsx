@@ -1,89 +1,38 @@
 import { createFileRoute, useLoaderData } from "@tanstack/react-router";
-import { MessageSquare, Sparkles, ShieldCheck, Users, Zap, Bell, Rocket } from "lucide-react";
+import { MessageSquare } from "lucide-react";
 import { ServiceVariationPage } from "../components/site/ServiceVariationPage";
 import { SERVICE_BY_ID } from "../data/services";
-import { seo, serviceJsonLd } from "../lib/seo";
+import { fetchServicePage } from "../lib/content.rpc";
+import { pageSeo, serviceJsonLd } from "../lib/seo";
 
-/* Значения по умолчанию — для мета-тегов и микроразметки, которые
-   собираются до отрисовки. Цена и срок на самой странице берутся
-   из снимка контента: они правятся из админки. */
+/* Из кода берётся только то, что не правится: путь страницы. Цена, срок
+   и весь текст приходят из снимка контента — их меняют из админки. */
 const service = SERVICE_BY_ID["bots/max"];
 
 export const Route = createFileRoute("/services/bots/max")({
-  head: () => {
-    const base = seo({
-      title: "MAX-бот — Боты — IT-Agent",
-      description:
-        "Боты для российского мессенджера MAX: новая аудитория, тот же функционал, что и у Telegram-ботов.",
-      path: service.path,
-      socialTitle: "MAX-бот под ключ — IT-Agent",
-      socialDescription: "Автоворонки, оплаты и поддержка внутри мессенджера MAX.",
-    });
-    return { ...base, meta: [...base.meta, serviceJsonLd(service)] };
+  loader: () => fetchServicePage({ data: { id: "bots/max" } }),
+  head: ({ loaderData }) => {
+    /* Микроразметка собирается по ЖИВОЙ услуге, а не по значениям из кода:
+       иначе поисковик получал бы старую цену ещё долго после того, как
+       владелец поменял её в админке. */
+    const base = pageSeo(service.path, loaderData);
+    return { ...base, meta: [...base.meta, serviceJsonLd(loaderData?.service ?? service)] };
   },
-  component: MaxBotPage,
+  component: ServicePage,
 });
 
-function MaxBotPage() {
+function ServicePage() {
+  const data = Route.useLoaderData();
   const { serviceById } = useLoaderData({ from: "__root__" });
   const live = serviceById["bots/max"];
 
   return (
     <ServiceVariationPage
-      eyebrow="Боты · MAX"
-      title={
-        <>
-          Бот в <span className="text-accent">мессенджере MAX</span>
-        </>
-      }
-      description="Новый российский мессенджер, новая аудитория. Переносим бота из Telegram или собираем с нуля — воронки, оплаты, поддержка."
+      content={data?.page ?? null}
       icon={MessageSquare}
       accent="teal"
       timeline={live.timeline}
       priceFrom={live.priceFrom}
-      bestFor={[
-        "Госсектор и корпоративный сегмент",
-        "Бренды, ориентированные на РФ",
-        "Проекты с фокусом на приватность",
-      ]}
-      features={[
-        {
-          icon: Sparkles,
-          title: "Первопроходцы",
-          text: "Заходим в MAX раньше конкурентов и занимаем аудиторию.",
-        },
-        {
-          icon: Rocket,
-          title: "Перенос из Telegram",
-          text: "Одна логика, две площадки — экономим бюджет на разработку.",
-        },
-        {
-          icon: ShieldCheck,
-          title: "Требования РФ",
-          text: "Хостинг и данные внутри РФ, работа с 152-ФЗ.",
-        },
-        {
-          icon: Users,
-          title: "Роли и рассылки",
-          text: "Сегменты пользователей, персональные сценарии.",
-        },
-        {
-          icon: Bell,
-          title: "Уведомления",
-          text: "Клиенту — статусы, менеджеру — заявки, руководителю — отчёты.",
-        },
-        { icon: Zap, title: "Быстрый MVP", text: "Первая рабочая версия за 5–7 дней." },
-      ]}
-      process={[
-        {
-          step: "2–3 дня",
-          title: "Сценарий и стек",
-          text: "Определяем сценарии, API MAX, регистрируем бота.",
-        },
-        { step: "3–5 дней", title: "Ядро бота", text: "Меню, роли, база, ключевые команды." },
-        { step: "3–7 дней", title: "Интеграции", text: "Оплаты, CRM, уведомления, аналитика." },
-        { step: "1–2 дня", title: "Запуск", text: "Тесты, обучение команды, публичный релиз." },
-      ]}
       siblings={[
         { to: "/services/bots/telegram", label: "Telegram-бот" },
         { to: "/services/bots/miniapp", label: "MiniApp" },

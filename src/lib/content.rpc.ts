@@ -15,9 +15,9 @@
 import { createServerFn } from "@tanstack/react-start";
 
 import type { CaseStudy } from "../data/cases";
-import type { ContentSnapshot } from "../server/content.server";
+import type { ContentSnapshot, PageMeta, ServicePageData } from "../server/content.server";
 
-export type { CaseStudy, ContentSnapshot };
+export type { CaseStudy, ContentSnapshot, PageMeta, ServicePageData };
 
 /**
  * Весь редактируемый контент одним запросом: услуги, пакеты, вопросы,
@@ -27,13 +27,51 @@ export type { CaseStudy, ContentSnapshot };
  * главная и цены, и вопросы, и плитки, — и раздельные запросы дали бы пять
  * походов на сервер при каждом переходе. На сервере снимок к тому же
  * кешируется по версии контента, так что цена этого вызова — почти ноль.
+ *
+ * БЕЗ мета-тегов. Они лежат в том же снимке, но нужны только `head()`
+ * страницы, а он их отсюда всё равно не видит и грузит своим запросом.
+ * Оставить их здесь значило бы возить описания всех шестнадцати страниц
+ * в разметке КАЖДОЙ — четыре килобайта на каждый заход ни за чем.
  */
+export type PublicContent = Omit<ContentSnapshot, "seo">;
+
 export const fetchSiteContent = createServerFn({ method: "GET" }).handler(
-  async (): Promise<ContentSnapshot> => {
+  async (): Promise<PublicContent> => {
     const { content } = await import("../server/content.server");
-    return content();
+    const { seo: _metaTags, ...rest } = content();
+    return rest;
   },
 );
+
+/**
+ * Заголовок и описание страницы для поисковика — правятся из админки.
+ *
+ * Отдельным запросом, а не из общего снимка, по устройству роутера: `head()`
+ * получает только `loaderData` СВОЕГО роута, данных корня там нет — они ещё
+ * не готовы к моменту сборки тегов. Запрос крошечный (две строки текста)
+ * и на сервере отвечает из кеша по версии контента.
+ */
+export const fetchPageMeta = createServerFn({ method: "GET" })
+  .validator((data: { path: string }) => ({ path: String(data?.path ?? "") }))
+  .handler(async ({ data }): Promise<PageMeta> => {
+    const { pageMeta } = await import("../server/content.server");
+    return pageMeta(data.path);
+  });
+
+/**
+ * Тексты одной страницы услуги: первый экран, «кому подходит», «что получите»,
+ * шаги. Отдельно от общего снимка — он едет в разметке каждой страницы сайта,
+ * а эти девяносто строк нужны одной странице из семи.
+ *
+ * Отдаёт заодно мета-теги и живую услугу: `head()` страницы собирается
+ * из этого же ответа, второй запрос ради двух строк не нужен.
+ */
+export const fetchServicePage = createServerFn({ method: "GET" })
+  .validator((data: { id: string }) => ({ id: String(data?.id ?? "") }))
+  .handler(async ({ data }): Promise<ServicePageData | null> => {
+    const { servicePage } = await import("../server/content.server");
+    return servicePage(data.id);
+  });
 
 /** Опубликованные кейсы в порядке сетки. */
 export const fetchCases = createServerFn({ method: "GET" }).handler(

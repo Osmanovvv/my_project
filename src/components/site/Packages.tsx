@@ -3,7 +3,7 @@ import { useLoaderData } from "@tanstack/react-router";
 
 export function Packages({ extended = false }: { extended?: boolean }) {
   /* Тарифы приходят из снимка контента: цены правятся из админки. */
-  const { packages } = useLoaderData({ from: "__root__" });
+  const { packages, texts } = useLoaderData({ from: "__root__" });
 
   return (
     // Три колонки только с lg. На md (768) карточка получала ~160px под
@@ -73,7 +73,7 @@ export function Packages({ extended = false }: { extended?: boolean }) {
                   : "border border-border text-foreground hover:bg-surface")
               }
             >
-              Обсудить пакет
+              {texts["cta.package"]}
             </Link>
           </div>
         );

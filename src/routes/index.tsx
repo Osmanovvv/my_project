@@ -13,8 +13,8 @@ import {
 } from "lucide-react";
 import { CATALOG_ORDER, type ServiceId } from "../data/services";
 import { AccentText } from "../components/site/AccentText";
-import { fetchCases } from "../lib/content.rpc";
-import { seo } from "../lib/seo";
+import { fetchCases, fetchPageMeta } from "../lib/content.rpc";
+import { pageSeo } from "../lib/seo";
 import { ContactSection } from "../components/site/ContactSection";
 import { Packages } from "../components/site/Packages";
 import { Portfolio } from "../components/site/Portfolio";
@@ -28,17 +28,13 @@ import { CtaLink } from "../components/site/CtaLink";
 import { ServiceCard } from "../components/site/ServiceCard";
 
 export const Route = createFileRoute("/")({
-  loader: () => fetchCases(),
-  head: () =>
-    seo({
-      title: "IT-Agent — Сайт, бот и админка для заявок",
-      description:
-        "Единая система: сайт, Telegram-бот и админка работают вместе — заявка приходит менеджеру моментально и сохраняется в одном месте.",
-      path: "/",
-      socialTitle: "IT-Agent — Сайт, который не теряет заявки",
-      socialDescription:
-        "Сайт + Telegram-бот + админка. Единая система приёма и обработки заявок для бизнеса.",
-    }),
+  /* Мета-теги грузятся вместе с кейсами: head() видит только свой
+     loaderData, до данных корня ему не добраться. */
+  loader: async () => {
+    const [cases, meta] = await Promise.all([fetchCases(), fetchPageMeta({ data: { path: "/" } })]);
+    return { cases, meta };
+  },
+  head: ({ loaderData }) => pageSeo("/", loaderData?.meta),
   component: HomePage,
 });
 function HomePage() {
@@ -56,7 +52,7 @@ function HomePage() {
   );
 }
 function PortfolioSection() {
-  const cases = Route.useLoaderData();
+  const { cases } = Route.useLoaderData();
   const { texts } = useLoaderData({ from: "__root__" });
 
   /* Кейсов нет — раздела нет. Пустая сетка с заголовком «Что мы уже сделали»
@@ -78,7 +74,7 @@ function PortfolioSection() {
       <Portfolio cases={cases} />
       <div className="mt-12 flex justify-center">
         <CtaLink to="/works" variant="ghost">
-          Посмотреть все работы
+          {texts["home.works.cta"]}
           <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
         </CtaLink>
       </div>
@@ -93,7 +89,7 @@ function ProcessSection() {
       <div className="mb-14">
         <SectionEyebrow>{texts["home.process.eyebrow"]}</SectionEyebrow>
         <h2 className="mt-3 text-3xl sm:text-4xl font-display max-w-xl">
-          Четыре шага без сюрпризов
+          <AccentText text={texts["home.process.title"]} />
         </h2>
       </div>
       <Process />
@@ -279,9 +275,7 @@ function PackagesSection() {
         <h2 className="mt-3 text-3xl sm:text-4xl font-display">
           <AccentText text={texts["home.packages.title"]} />
         </h2>
-        <p className="mt-3 text-muted-foreground">
-          Готовый пакет — или только одна услуга, если нужно точечно.
-        </p>
+        <p className="mt-3 text-muted-foreground">{texts["home.packages.note"]}</p>
       </div>
 
       <div className="mb-10 flex justify-center">

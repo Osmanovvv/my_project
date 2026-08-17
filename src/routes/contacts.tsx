@@ -3,18 +3,14 @@ import { Mail, Phone, Send, type LucideIcon } from "lucide-react";
 import { ContactSection } from "../components/site/ContactSection";
 import { PageHero } from "../components/site/PageHero";
 import { ORGANIZATION, type ContactChannel } from "../data/contacts";
-import { absoluteUrl, jsonLd, seo } from "../lib/seo";
+import { AccentText } from "../components/site/AccentText";
+import { fetchPageMeta } from "../lib/content.rpc";
+import { absoluteUrl, jsonLd, pageSeo } from "../lib/seo";
 
 export const Route = createFileRoute("/contacts")({
-  head: () => {
-    const base = seo({
-      title: "Заказать сайт, Telegram-бота или админку | Контакты IT-Agent",
-      description:
-        "Оставьте заявку — вернёмся с коротким разбором вашей ситуации. Без длинного техзадания и обязательств на старте.",
-      path: "/contacts",
-      socialTitle: "Контакты — IT-Agent",
-      socialDescription: "Форма заявки. Отвечаем в течение рабочего дня.",
-    });
+  loader: () => fetchPageMeta({ data: { path: "/contacts" } }),
+  head: ({ loaderData }) => {
+    const base = pageSeo("/contacts", loaderData);
     return {
       ...base,
       meta: [
@@ -39,18 +35,14 @@ const ICONS: Record<ContactChannel["id"], LucideIcon> = {
 };
 
 function ContactsPage() {
-  const { contacts } = useLoaderData({ from: "__root__" });
+  const { contacts, texts } = useLoaderData({ from: "__root__" });
 
   return (
     <>
       <PageHero
-        eyebrow="Контакты"
-        title={
-          <>
-            Первый шаг — <span className="text-accent">короткий разговор</span>
-          </>
-        }
-        description="Оставьте заявку — ответим в течение рабочего дня."
+        eyebrow={texts["page.contacts.eyebrow"]}
+        title={<AccentText text={texts["page.contacts.title"]} />}
+        description={texts["page.contacts.lead"]}
       />
 
       {/* Пока каналов нет, сетку не рисуем: пустой ряд карточек читается как

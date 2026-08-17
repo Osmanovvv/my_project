@@ -1,4 +1,4 @@
-import { Link } from "@tanstack/react-router";
+import { Link, useLoaderData } from "@tanstack/react-router";
 import { useState } from "react";
 import { Menu, X } from "lucide-react";
 import { Mascot } from "./Mascot";
@@ -12,6 +12,9 @@ const nav = [
 ] as const;
 
 export function SiteHeader() {
+  /* Надпись кнопки — из снимка: она же стоит на хабе услуг и на страницах
+     услуг, и правиться должна одним полем, а не четырьмя копиями. */
+  const { texts } = useLoaderData({ from: "__root__" });
   const [open, setOpen] = useState(false);
 
   return (
@@ -65,7 +68,7 @@ export function SiteHeader() {
             data-mascot-cheer
             className="inline-flex h-9 items-center justify-center rounded-lg bg-accent px-4 text-sm font-medium text-accent-foreground transition hover:brightness-110"
           >
-            Получить разбор
+            {texts["cta.primary"]}
           </Link>
         </div>
 
@@ -99,7 +102,7 @@ export function SiteHeader() {
               onClick={() => setOpen(false)}
               className="mt-2 inline-flex h-11 items-center justify-center rounded-lg bg-accent px-4 text-sm font-medium text-accent-foreground"
             >
-              Получить разбор
+              {texts["cta.primary"]}
             </Link>
           </div>
         </div>

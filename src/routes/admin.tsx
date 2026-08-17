@@ -1,5 +1,5 @@
 import { createFileRoute, redirect, Link, Outlet, useRouter } from "@tanstack/react-router";
-import { FolderOpen, Inbox, LogOut, SlidersHorizontal } from "lucide-react";
+import { ExternalLink, FolderOpen, Inbox, LogOut, SlidersHorizontal } from "lucide-react";
 
 import { getAuthState, submitLogout } from "../lib/admin.rpc";
 
@@ -77,12 +77,25 @@ function AdminHeader() {
 
   return (
     <header className="sticky top-0 z-20 border-b border-border bg-background/95 backdrop-blur">
-      {/* `whitespace-nowrap` и скрытые на узком экране подписи — потому что
-          на 390 логотип и «Сайт ↗» ломались на две строки и шапка вырастала
-          вдвое. Экран заявок смотрят с телефона, ему нужна тонкая шапка. */}
+      {/*
+        НА ТЕЛЕФОНЕ ПОДПИСЕЙ НЕТ, ТОЛЬКО ЗНАЧКИ — и это не украшательство.
+        С подписями строка шапки занимала 400px содержимого при 342 доступных
+        на экране 390, и КАЖДАЯ страница админки уезжала вбок на 45 пикселей.
+        Заметить это на широком экране невозможно, а с телефона видно сразу:
+        страница ездит горизонтально при каждом касании.
+
+        Раздел при этом не теряется: у него отдельный значок, активный
+        подсвечен, а название повторено заголовком на самой странице.
+
+        `aria-label` обязателен у каждой: без подписи у значка не остаётся
+        вообще никакого имени, и скринридер читает такую ссылку как «ссылка».
+        У кнопки выхода дыра была и раньше — подпись пряталась, а имя взамен
+        не давалось.
+      */}
       <div className="mx-auto flex w-full max-w-5xl items-center gap-2 px-4 py-3 sm:gap-4 sm:px-6">
         <Link
           to="/admin"
+          aria-label="IT-Agent, админка"
           className="-my-1 whitespace-nowrap rounded-lg py-2 font-display text-sm font-semibold tracking-tight transition hover:text-accent"
         >
           IT<span className="text-muted-foreground">—</span>Agent
@@ -95,20 +108,23 @@ function AdminHeader() {
           <Link
             to="/admin"
             activeOptions={{ exact: true }}
+            aria-label="Заявки"
             className="inline-flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-sm text-muted-foreground transition hover:bg-muted hover:text-foreground sm:px-3 [&.active]:bg-accent-soft [&.active]:text-accent"
           >
             <Inbox className="h-4 w-4" />
-            Заявки
+            <span className="hidden sm:inline">Заявки</span>
           </Link>
           <Link
             to="/admin/cases"
+            aria-label="Кейсы"
             className="inline-flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-sm text-muted-foreground transition hover:bg-muted hover:text-foreground sm:px-3 [&.active]:bg-accent-soft [&.active]:text-accent"
           >
             <FolderOpen className="h-4 w-4" />
-            Кейсы
+            <span className="hidden sm:inline">Кейсы</span>
           </Link>
           <Link
             to="/admin/content"
+            aria-label="Контент сайта"
             className="inline-flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-sm text-muted-foreground transition hover:bg-muted hover:text-foreground sm:px-3 [&.active]:bg-accent-soft [&.active]:text-accent"
           >
             <SlidersHorizontal className="h-4 w-4" />
@@ -120,13 +136,16 @@ function AdminHeader() {
           <Link
             to="/"
             target="_blank"
-            className="whitespace-nowrap rounded-lg px-2.5 py-1.5 text-sm text-muted-foreground transition hover:bg-muted hover:text-foreground sm:px-3"
+            aria-label="Открыть сайт в новой вкладке"
+            className="inline-flex items-center gap-2 whitespace-nowrap rounded-lg px-2.5 py-1.5 text-sm text-muted-foreground transition hover:bg-muted hover:text-foreground sm:px-3"
           >
-            Сайт&nbsp;↗
+            <ExternalLink className="h-4 w-4" />
+            <span className="hidden sm:inline">Сайт</span>
           </Link>
           <button
             type="button"
             onClick={onLogout}
+            aria-label="Выйти из админки"
             className="inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm text-muted-foreground transition hover:bg-muted hover:text-foreground"
           >
             <LogOut className="h-4 w-4" />

@@ -235,6 +235,22 @@ export function getService(id: ServiceId): Service {
   return SERVICE_BY_ID[id];
 }
 
+/**
+ * Идентификатор услуги в адресе админки: `websites/landing` → `websites-landing`.
+ *
+ * Косая черта внутри идентификатора — часть смысла (направление и услуга),
+ * но в параметре роута она означала бы новый сегмент пути. Замена на дефис
+ * обратима, потому что дефисов в самих идентификаторах нет.
+ */
+export function serviceSlug(id: ServiceId): string {
+  return id.replace("/", "-");
+}
+
+export function serviceFromSlug(slug: string): ServiceId | null {
+  const found = SERVICE_IDS.find((id) => serviceSlug(id) === slug);
+  return found ?? null;
+}
+
 export function servicesOf(category: ServiceCategoryId): Service[] {
   return SERVICES.filter((service) => service.category === category);
 }

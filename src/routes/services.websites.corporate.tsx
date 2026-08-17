@@ -1,98 +1,38 @@
 import { createFileRoute, useLoaderData } from "@tanstack/react-router";
-import { Layout, FileText, Users, Building2, Newspaper, Search, Languages } from "lucide-react";
+import { Layout } from "lucide-react";
 import { ServiceVariationPage } from "../components/site/ServiceVariationPage";
 import { SERVICE_BY_ID } from "../data/services";
-import { seo, serviceJsonLd } from "../lib/seo";
+import { fetchServicePage } from "../lib/content.rpc";
+import { pageSeo, serviceJsonLd } from "../lib/seo";
 
-/* Значения по умолчанию — для мета-тегов и микроразметки, которые
-   собираются до отрисовки. Цена и срок на самой странице берутся
-   из снимка контента: они правятся из админки. */
+/* Из кода берётся только то, что не правится: путь страницы. Цена, срок
+   и весь текст приходят из снимка контента — их меняют из админки. */
 const service = SERVICE_BY_ID["websites/corporate"];
 
 export const Route = createFileRoute("/services/websites/corporate")({
-  head: () => {
-    const base = seo({
-      title: "Корпоративный сайт — Сайты — IT-Agent",
-      description:
-        "Многостраничный сайт компании: услуги, кейсы, блог, вакансии. Собственная админка и SEO.",
-      path: service.path,
-      socialTitle: "Корпоративный сайт — IT-Agent",
-      socialDescription:
-        "Сайт с услугами, кейсами, командой и блогом — под управлением без разработчика.",
-    });
-    return { ...base, meta: [...base.meta, serviceJsonLd(service)] };
+  loader: () => fetchServicePage({ data: { id: "websites/corporate" } }),
+  head: ({ loaderData }) => {
+    /* Микроразметка собирается по ЖИВОЙ услуге, а не по значениям из кода:
+       иначе поисковик получал бы старую цену ещё долго после того, как
+       владелец поменял её в админке. */
+    const base = pageSeo(service.path, loaderData);
+    return { ...base, meta: [...base.meta, serviceJsonLd(loaderData?.service ?? service)] };
   },
-  component: CorporatePage,
+  component: ServicePage,
 });
 
-function CorporatePage() {
+function ServicePage() {
+  const data = Route.useLoaderData();
   const { serviceById } = useLoaderData({ from: "__root__" });
   const live = serviceById["websites/corporate"];
 
   return (
     <ServiceVariationPage
-      eyebrow="Сайты · Корпоративный"
-      title={
-        <>
-          Корпоративный сайт, <span className="text-accent">которым гордятся</span>
-        </>
-      }
-      description="Многостраничник для компании: услуги, кейсы, команда, блог и вакансии. Управляется без разработчика и растёт в поиске."
+      content={data?.page ?? null}
       icon={Layout}
       accent="indigo"
       timeline={live.timeline}
       priceFrom={live.priceFrom}
-      bestFor={["Агентства и студии", "B2B-услуги", "Производство и подрядчики"]}
-      features={[
-        {
-          icon: FileText,
-          title: "Услуги и кейсы",
-          text: "Отдельные страницы под каждую услугу и кейс — важно для SEO.",
-        },
-        {
-          icon: Users,
-          title: "Команда и вакансии",
-          text: "Раздел о команде, HR-страница, приём откликов в Telegram.",
-        },
-        {
-          icon: Newspaper,
-          title: "Блог и медиа",
-          text: "Полноценный блог с рубриками, тегами и RSS.",
-        },
-        {
-          icon: Search,
-          title: "SEO из коробки",
-          text: "Sitemap, robots, микроразметка, human-friendly URL.",
-        },
-        {
-          icon: Building2,
-          title: "Админка",
-          text: "Редактируйте тексты, услуги, кейсы и команду без разработчика.",
-        },
-        { icon: Languages, title: "Мультиязычность", text: "RU / EN / другой язык — опционально." },
-      ]}
-      process={[
-        {
-          step: "3–5 дней",
-          title: "Аналитика",
-          text: "Разбираем структуру, конкурентов, собираем карту сайта.",
-        },
-        {
-          step: "5–7 дней",
-          title: "Дизайн",
-          text: "Ключевые экраны, дизайн-система, шаблоны страниц.",
-        },
-        {
-          step: "1–2 недели",
-          title: "Разработка",
-          text: "Вёрстка, админка, интеграции с CRM и почтой.",
-        },
-        {
-          step: "2–3 дня",
-          title: "Запуск и контент",
-          text: "Наполняем реальным контентом, настраиваем аналитику, публикуем.",
-        },
-      ]}
       siblings={[
         { to: "/services/websites/landing", label: "Лендинг" },
         { to: "/services/websites/ecommerce", label: "E-commerce" },

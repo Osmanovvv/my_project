@@ -5,6 +5,7 @@ import {
   Hash,
   Layers,
   Phone,
+  Search,
   Type,
   Wallet,
   type LucideIcon,
@@ -12,6 +13,7 @@ import {
 
 import { fetchAdminContent } from "../lib/admin.rpc";
 import { TEXT_DEFAULTS } from "../data/texts";
+import { SEO_DEFAULTS, SEO_PAGES } from "../data/seo-pages";
 
 /**
  * Меню разделов контента.
@@ -54,12 +56,18 @@ function ContentMenu() {
   ).length;
   const previewCount = data.faq.filter((f) => f.preview).length;
 
+  const changedSeo = SEO_PAGES.filter((page) => {
+    const entry = data.seo[page.path];
+    const fallback = SEO_DEFAULTS[page.path];
+    return entry && fallback && entry.title !== fallback.title;
+  }).length;
+
   const items: Item[] = [
     {
       to: "/admin/content/services",
       icon: Wallet,
-      title: "Услуги и цены",
-      note: "Цена, срок и описания каждой услуги",
+      title: "Услуги",
+      note: "Цена, срок и весь текст страницы каждой услуги",
       summary: `${data.services.length} услуг`,
     },
     {
@@ -93,9 +101,16 @@ function ContentMenu() {
     {
       to: "/admin/content/texts",
       icon: Type,
-      title: "Тексты главной",
-      note: "Первый экран и заголовки блоков",
+      title: "Тексты сайта",
+      note: "Главная, блок заявки, шапки страниц, карточки ниш",
       summary: changedTexts ? `изменено: ${changedTexts}` : "как в исходном виде",
+    },
+    {
+      to: "/admin/content/seo",
+      icon: Search,
+      title: "Заголовки для поиска",
+      note: "Что видно в Яндексе и Google по каждой странице",
+      summary: changedSeo ? `изменено: ${changedSeo}` : `${SEO_PAGES.length} страниц`,
     },
   ];
 

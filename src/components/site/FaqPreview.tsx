@@ -1,7 +1,8 @@
-import { Link } from "@tanstack/react-router";
+import { Link, useLoaderData } from "@tanstack/react-router";
 import { useId, useState } from "react";
 import { Plus, Minus } from "lucide-react";
 import type { FaqItem } from "../../data/faq";
+import { AccentText } from "./AccentText";
 import { SectionEyebrow } from "./SectionEyebrow";
 
 /* Раньше здесь лежал свой набор из четырёх вопросов с формулировками,
@@ -10,14 +11,15 @@ import { SectionEyebrow } from "./SectionEyebrow";
 export function FaqPreview({ items }: { items: FaqItem[] }) {
   const [open, setOpen] = useState<number | null>(0);
   const baseId = useId();
+  const { texts } = useLoaderData({ from: "__root__" });
   return (
     <div className="grid lg:grid-cols-[1fr_1.4fr] gap-10 lg:gap-16 items-start">
       <div>
-        <SectionEyebrow>Вопросы</SectionEyebrow>
-        <h2 className="mt-3 text-3xl sm:text-4xl font-display">Отвечаем заранее</h2>
-        <p className="mt-4 text-muted-foreground max-w-sm">
-          Самое частое. Если вашего вопроса нет — напишите, добавим.
-        </p>
+        <SectionEyebrow>{texts["home.faq.eyebrow"]}</SectionEyebrow>
+        <h2 className="mt-3 text-3xl sm:text-4xl font-display">
+          <AccentText text={texts["home.faq.title"]} />
+        </h2>
+        <p className="mt-4 text-muted-foreground max-w-sm">{texts["home.faq.note"]}</p>
         <Link
           to="/faq"
           className="mt-4 -mx-1 inline-flex px-1 py-2.5 text-sm text-accent hover:brightness-110 font-medium"

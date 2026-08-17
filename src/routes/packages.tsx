@@ -4,23 +4,19 @@ import { Packages } from "../components/site/Packages";
 import { ContactSection } from "../components/site/ContactSection";
 import { PageHero } from "../components/site/PageHero";
 import { CATALOG_ORDER, type Service } from "../data/services";
-import { seo } from "../lib/seo";
+import { AccentText } from "../components/site/AccentText";
+import { fetchPageMeta } from "../lib/content.rpc";
+import { pageSeo } from "../lib/seo";
 import { SectionEyebrow } from "../components/site/SectionEyebrow";
 import { ServiceCard } from "../components/site/ServiceCard";
 export const Route = createFileRoute("/packages")({
-  head: () =>
-    seo({
-      title: "Сколько стоит сайт с ботом — цены и пакеты | IT-Agent",
-      description:
-        "Пакет «Старт» от 60 000 ₽, «Бизнес» от 180 000 ₽, «Система» от 420 000 ₽. Что входит, срок запуска и результат по каждому — без скрытых доплат и длинного техзадания.",
-      path: "/packages",
-      socialDescription: "Старт, Бизнес, Система. Кому подходит, что на выходе, срок запуска.",
-    }),
+  loader: () => fetchPageMeta({ data: { path: "/packages" } }),
+  head: ({ loaderData }) => pageSeo("/packages", loaderData),
   component: PackagesPage,
 });
 function PackagesPage() {
   /* Порядок карточек задан кодом, цены — из снимка: они правятся из админки. */
-  const { services } = useLoaderData({ from: "__root__" });
+  const { services, texts } = useLoaderData({ from: "__root__" });
   const catalog = CATALOG_ORDER.map((id) =>
     services.find((item: Service) => item.id === id),
   ).filter((s): s is Service => Boolean(s));
@@ -29,13 +25,9 @@ function PackagesPage() {
     <>
       <div>
         <PageHero
-          eyebrow="Пакеты"
-          title={
-            <>
-              Выберите <span className="text-accent">с чего начать</span>
-            </>
-          }
-          description="На старте достаточно простой формы и уведомлений. Дальше — админка и логика. Пакет можно выбрать после разбора."
+          eyebrow={texts["page.packages.eyebrow"]}
+          title={<AccentText text={texts["page.packages.title"]} />}
+          description={texts["page.packages.lead"]}
         />
       </div>
       <section className="container-page py-16 sm:py-24">
@@ -43,13 +35,12 @@ function PackagesPage() {
       </section>
       <section className="container-page pb-20 sm:pb-24">
         <div className="mb-10">
-          <SectionEyebrow>Или по отдельности</SectionEyebrow>
+          <SectionEyebrow>{texts["page.packages.singleEyebrow"]}</SectionEyebrow>
           <h2 className="mt-3 font-display text-3xl sm:text-4xl">
-            Можно заказать только то, что нужно
+            {texts["page.packages.singleTitle"]}
           </h2>
           <p className="mt-3 text-muted-foreground max-w-2xl">
-            Пакеты — это типовые комбинации. Если нужен только сайт, бот или MiniApp — оценим и
-            соберём отдельно.
+            {texts["page.packages.singleLead"]}
           </p>
         </div>
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">

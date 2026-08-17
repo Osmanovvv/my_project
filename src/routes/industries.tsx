@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useLoaderData } from "@tanstack/react-router";
 import {
   Wrench,
   Store,
@@ -12,16 +12,12 @@ import {
 import { ContactSection } from "../components/site/ContactSection";
 import { PageHero } from "../components/site/PageHero";
 import { Mascot } from "../components/site/Mascot";
-import { seo } from "../lib/seo";
+import { AccentText } from "../components/site/AccentText";
+import { fetchPageMeta } from "../lib/content.rpc";
+import { pageSeo } from "../lib/seo";
 export const Route = createFileRoute("/industries")({
-  head: () =>
-    seo({
-      title: "Кому нужен сайт с Telegram-ботом и админкой | IT-Agent",
-      description:
-        "Сервисный бизнес, локальные компании, B2B, онлайн-сервисы и выездные услуги. Шесть типичных ситуаций: где теряются заявки и что мы с этим делаем.",
-      path: "/industries",
-      socialDescription: "Шесть типичных сценариев: задача бизнеса и что мы делаем.",
-    }),
+  loader: () => fetchPageMeta({ data: { path: "/industries" } }),
+  head: ({ loaderData }) => pageSeo("/industries", loaderData),
   component: IndustriesPage,
 });
 type Scenario = {
@@ -31,61 +27,34 @@ type Scenario = {
   solution: string;
   tag: string;
 };
-const scenarios: Scenario[] = [
-  {
-    name: "Сервисный бизнес",
-    icon: Wrench,
-    tag: "ремонт · клининг · сервис",
-    problem: "Заявки теряются между звонками и мессенджерами.",
-    solution: "Сайт + Telegram-уведомления, менеджер видит всё в одном месте.",
-  },
-  {
-    name: "Локальная компания",
-    icon: Store,
-    tag: "офлайн-точки · услуги района",
-    problem: "Клиенты пишут в 3 канала, забываем перезвонить.",
-    solution: "Единая админка со статусами и напоминаниями.",
-  },
-  {
-    name: "B2B-услуги",
-    icon: Briefcase,
-    tag: "агентства · подрядчики",
-    problem: "Долгий цикл сделки, теряется история клиента.",
-    solution: "История, комментарии и следующий шаг по каждой заявке.",
-  },
-  {
-    name: "Онлайн-сервис",
-    icon: Cloud,
-    tag: "SaaS · онлайн-запись",
-    problem: "Нужно быстро обрабатывать входящие заявки.",
-    solution: "Форма → бот → админка со статусами. Всё автоматически.",
-  },
-  {
-    name: "Выездные услуги",
-    icon: Truck,
-    tag: "доставка · монтаж · выезд",
-    problem: "Менеджер в разъездах, отвечать неудобно.",
-    solution: "Заявки в Telegram — можно ответить с телефона за 30 секунд.",
-  },
-  {
-    name: "Стартап",
-    icon: Rocket,
-    tag: "MVP · первые клиенты",
-    problem: "Нет времени и бюджета на большую CRM.",
-    solution: "Начинаем со «Старта» и растём по мере потока заявок.",
-  },
-];
+
+/**
+ * Иконки шести ниш. Сами тексты приходят из админки — это те слова, которыми
+ * клиенты описывают свою задачу, и переписывать их придётся после каждого
+ * десятка разговоров.
+ *
+ * Количество карточек фиксировано, и это ограничение раскладки: шесть ровно
+ * ложится и в две колонки, и в три, а пять или семь оставят дырку на десктопе.
+ */
+const SCENARIO_ICONS: LucideIcon[] = [Wrench, Store, Briefcase, Cloud, Truck, Rocket];
+
 function IndustriesPage() {
+  const { texts } = useLoaderData({ from: "__root__" });
+
+  const scenarios: Scenario[] = SCENARIO_ICONS.map((icon, i) => ({
+    icon,
+    name: texts[`industries.card${i + 1}.name` as keyof typeof texts],
+    tag: texts[`industries.card${i + 1}.tag` as keyof typeof texts],
+    problem: texts[`industries.card${i + 1}.problem` as keyof typeof texts],
+    solution: texts[`industries.card${i + 1}.solution` as keyof typeof texts],
+  }));
+
   return (
     <>
       <PageHero
-        eyebrow="Для кого"
-        title={
-          <>
-            Шесть типичных <span className="text-accent">ситуаций</span>
-          </>
-        }
-        description="Найдите свою — так проще понять, что именно мы будем делать."
+        eyebrow={texts["page.industries.eyebrow"]}
+        title={<AccentText text={texts["page.industries.title"]} />}
+        description={texts["page.industries.lead"]}
         mascotPose="peek"
       />
       <section className="container-page py-16 sm:py-24">
@@ -109,12 +78,9 @@ function IndustriesPage() {
             </div>
             <div className="text-center md:text-left">
               <div className="font-display text-2xl sm:text-3xl leading-tight max-w-xl">
-                Не нашли свою нишу? Это не проблема.
+                {texts["industries.band.title"]}
               </div>
-              <p className="mt-3 text-muted-foreground max-w-xl">
-                Мы работаем с любым бизнесом, где есть входящие заявки. Расскажите про свой поток —
-                предложим схему.
-              </p>
+              <p className="mt-3 text-muted-foreground max-w-xl">{texts["industries.band.text"]}</p>
             </div>
           </div>
         </div>

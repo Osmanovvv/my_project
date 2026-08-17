@@ -6,22 +6,23 @@ import { Portfolio } from "../components/site/Portfolio";
 import { ContactSection } from "../components/site/ContactSection";
 import { Mascot } from "../components/site/Mascot";
 import { filterCases, tagsOf, type CaseTag } from "../data/cases";
-import { fetchCases } from "../lib/content.rpc";
-import { absoluteUrl, jsonLd, seo, SITE_NAME } from "../lib/seo";
+import { fetchCases, fetchPageMeta } from "../lib/content.rpc";
+import { AccentText } from "../components/site/AccentText";
+import { absoluteUrl, jsonLd, pageSeo, SITE_NAME } from "../lib/seo";
 import { SectionEyebrow } from "../components/site/SectionEyebrow";
 import { CtaLink } from "../components/site/CtaLink";
 
 export const Route = createFileRoute("/works/")({
-  loader: () => fetchCases(),
+  loader: async () => {
+    const [cases, meta] = await Promise.all([
+      fetchCases(),
+      fetchPageMeta({ data: { path: "/works" } }),
+    ]);
+    return { cases, meta };
+  },
   head: ({ loaderData }) => {
-    const cases = loaderData ?? [];
-    const base = seo({
-      title: "Портфолио: сайты, Telegram-боты и админки | IT-Agent",
-      description:
-        "Проекты IT-Agent: сайты с ботом и админкой для магазинов, клиник, школ, автосервисов и B2B. Что просил клиент, что мы собрали и как это работает сейчас.",
-      path: "/works",
-      socialDescription: "Кейсы IT-Agent: сайты, Telegram-боты, MiniApp и админки.",
-    });
+    const cases = loaderData?.cases ?? [];
+    const base = pageSeo("/works", loaderData?.meta);
     return {
       ...base,
       meta: [
@@ -45,8 +46,8 @@ export const Route = createFileRoute("/works/")({
 });
 
 function WorksPage() {
-  const cases = Route.useLoaderData();
-  const { metrics } = useLoaderData({ from: "__root__" });
+  const { cases } = Route.useLoaderData();
+  const { metrics, texts } = useLoaderData({ from: "__root__" });
   const stats = metrics.works;
   const [active, setActive] = useState<CaseTag | "Все">("Все");
 
@@ -58,18 +59,14 @@ function WorksPage() {
 
   const description =
     active === "Все"
-      ? "Кейсы IT-Agent — от локальных мастерских до сетевых клиник и B2B-каталогов."
+      ? texts["page.works.lead"]
       : `Проекты с направлением «${active}» — в связке с остальной инфраструктурой.`;
 
   return (
     <>
       <PageHero
-        eyebrow="Работы"
-        title={
-          <>
-            Проекты, которые <span className="text-accent">уже работают</span>
-          </>
-        }
+        eyebrow={texts["page.works.eyebrow"]}
+        title={<AccentText text={texts["page.works.title"]} />}
         description={description}
         mascotPose="peek"
       >

@@ -2,38 +2,33 @@ import { createFileRoute, useLoaderData } from "@tanstack/react-router";
 import { ContactSection } from "../components/site/ContactSection";
 import { FaqList } from "../components/site/FaqList";
 import { PageHero } from "../components/site/PageHero";
-import { faqJsonLd, seo } from "../lib/seo";
+import { AccentText } from "../components/site/AccentText";
+import { fetchPageMeta } from "../lib/content.rpc";
+import { faqJsonLd, pageSeo } from "../lib/seo";
 
 export const Route = createFileRoute("/faq")({
-  head: ({ match }) => {
-    /* Вопросы приходят из загрузчика корня — они правятся из админки. */
-    const faq = (match.context as { faq?: Array<{ q: string; a: string }> })?.faq ?? [];
-    const base = seo({
-      title: "Вопросы о разработке сайтов и Telegram-ботов | IT-Agent",
-      description:
-        "Сколько стоит сайт с ботом, какие сроки, нужно ли техзадание, что будет после запуска и можно ли заказать что-то одно. Отвечаем коротко и по делу.",
-      path: "/faq",
-      socialTitle: "Вопросы — IT-Agent",
-      socialDescription: "Что нужно на старте, сколько занимает запуск, что делаем после.",
-    });
-    return { ...base, meta: [...base.meta, faqJsonLd(faq)] };
+  /* Вопросы грузятся здесь, а не берутся из корня: head() видит только свой
+     loaderData. Раньше список пытались достать из match.context — там лежит
+     контекст роутера, а не данные, и в разметку FAQPage молча уходило
+     mainEntity: []. То есть поисковику сообщалось, что вопросов на странице
+     нет ни одного, при том что страница целиком из них и состоит. */
+  loader: () => fetchPageMeta({ data: { path: "/faq" } }),
+  head: ({ loaderData }) => {
+    const base = pageSeo("/faq", loaderData);
+    return { ...base, meta: [...base.meta, faqJsonLd(loaderData?.faq ?? [])] };
   },
   component: FaqPage,
 });
 
 function FaqPage() {
-  const { faq } = useLoaderData({ from: "__root__" });
+  const { faq, texts } = useLoaderData({ from: "__root__" });
 
   return (
     <>
       <PageHero
-        eyebrow="Вопросы"
-        title={
-          <>
-            Короткие <span className="text-accent">ответы</span>
-          </>
-        }
-        description="Если чего-то не хватает — напишите, ответим лично."
+        eyebrow={texts["page.faq.eyebrow"]}
+        title={<AccentText text={texts["page.faq.title"]} />}
+        description={texts["page.faq.lead"]}
         mascotPose="peek"
       />
 

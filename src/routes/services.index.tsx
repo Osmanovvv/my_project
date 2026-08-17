@@ -1,22 +1,18 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useLoaderData } from "@tanstack/react-router";
 import { ArrowRight, Globe, Bot, LifeBuoy, Sparkles } from "lucide-react";
 import { PageHero } from "../components/site/PageHero";
 import { ContactSection } from "../components/site/ContactSection";
 import { Mascot } from "../components/site/Mascot";
 import { CATEGORIES } from "../data/services";
-import { seo } from "../lib/seo";
+import { AccentText } from "../components/site/AccentText";
+import { fetchPageMeta } from "../lib/content.rpc";
+import { pageSeo } from "../lib/seo";
 import { SectionEyebrow } from "../components/site/SectionEyebrow";
 import { CtaLink } from "../components/site/CtaLink";
 
 export const Route = createFileRoute("/services/")({
-  head: () =>
-    seo({
-      title: "Разработка сайтов и Telegram-ботов под ключ — IT-Agent",
-      description:
-        "Разрабатываем сайты, Telegram и MAX ботов, MiniApp и админку заявок. Собираем их в одну систему: заявка с сайта приходит менеджеру в Telegram за секунды. Цены от 40 000 ₽.",
-      path: "/services",
-      socialDescription: "Три направления IT-Agent: сайты, боты и MiniApp, поддержка и SEO.",
-    }),
+  loader: () => fetchPageMeta({ data: { path: "/services" } }),
+  head: ({ loaderData }) => pageSeo("/services", loaderData),
   component: ServicesHub,
 });
 
@@ -64,16 +60,14 @@ const categories = [
 ];
 
 function ServicesHub() {
+  const { texts } = useLoaderData({ from: "__root__" });
+
   return (
     <>
       <PageHero
-        eyebrow="Услуги"
-        title={
-          <>
-            Три направления, <span className="text-accent">одна команда</span>
-          </>
-        }
-        description="Сайты, боты и MiniApp, поддержка и SEO — выбирайте одно направление или собирайте связку под задачу."
+        eyebrow={texts["page.services.eyebrow"]}
+        title={<AccentText text={texts["page.services.title"]} />}
+        description={texts["page.services.lead"]}
       >
         <div className="flex flex-wrap items-center gap-2">
           {categories.map((c) => (
@@ -156,7 +150,7 @@ function ServicesHub() {
               схему под ваш кейс.
             </p>
             <CtaLink to="/contacts" className="mt-8">
-              Получить разбор
+              {texts["cta.primary"]}
               <ArrowRight className="h-4 w-4" />
             </CtaLink>
           </div>

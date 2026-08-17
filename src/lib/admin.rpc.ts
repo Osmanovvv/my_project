@@ -476,6 +476,119 @@ export const saveContactChannels = createServerFn({ method: "POST" })
     return { ok: true as const };
   });
 
+/** Тексты одной страницы услуги для формы. */
+export const fetchAdminServicePage = createServerFn({ method: "GET" })
+  .validator((data: { id: string }) => ({ id: String(data?.id ?? "") }))
+  .handler(async ({ data }) => {
+    await assertAuth();
+    const { servicePage } = await import("../server/content.server");
+    return servicePage(data.id);
+  });
+
+export const saveServicePage = createServerFn({ method: "POST" })
+  .validator((data: Record<string, unknown>) => ({
+    id: line(data?.id, 40),
+    eyebrow: line(data?.eyebrow, 60),
+    heroTitle: line(data?.heroTitle, 120),
+    heroLead: line(data?.heroLead, 400),
+    bestFor: Array.isArray(data?.bestFor) ? data.bestFor : [],
+    features: Array.isArray(data?.features) ? data.features : [],
+    steps: Array.isArray(data?.steps) ? data.steps : [],
+  }))
+  .handler(async ({ data }) => {
+    await assertAuth();
+    assertSameOrigin();
+    const { saveServicePageOverride } = await import("../server/content.server");
+    const { SERVICE_IDS } = await import("../data/services");
+    const { isIconKey, FALLBACK_ICON } = await import("../data/icons");
+
+    if (!(SERVICE_IDS as readonly string[]).includes(data.id)) throw new Error("bad_service");
+
+    /* Пустые пункты не сохраняем: оставленная в форме пустая строка уехала бы
+       на сайт пустым маркером в списке или карточкой без текста. */
+    saveServicePageOverride(data.id, {
+      eyebrow: data.eyebrow,
+      heroTitle: data.heroTitle,
+      heroLead: data.heroLead,
+      bestFor: data.bestFor
+        .map((item) => line(item, 120))
+        .filter(Boolean)
+        .slice(0, 6),
+      features: (data.features as Array<Record<string, unknown>>)
+        .map((raw) => {
+          const icon = line(raw.icon, 40);
+          return {
+            /* Неизвестный ключ иконки заменяем запасным, а не пишем как есть:
+               иначе на странице появится пустое место там, где ожидался
+               значок, и понять причину по вёрстке будет невозможно. */
+            icon: isIconKey(icon) ? icon : FALLBACK_ICON,
+            title: line(raw.title, 60),
+            text: line(raw.text, 300),
+          };
+        })
+        .filter((item) => item.title !== "")
+        .slice(0, 9),
+      steps: (data.steps as Array<Record<string, unknown>>)
+        .map((raw) => ({
+          step: line(raw.step, 40),
+          title: line(raw.title, 60),
+          text: line(raw.text, 300),
+        }))
+        .filter((item) => item.title !== "")
+        .slice(0, 6),
+    });
+    return { ok: true as const };
+  });
+
+export const saveSeoPage = createServerFn({ method: "POST" })
+  .validator((data: Record<string, unknown>) => ({
+    path: line(data?.path, 120),
+    title: line(data?.title, 200),
+    description: line(data?.description, 400),
+    socialTitle: line(data?.socialTitle, 200),
+    socialDescription: line(data?.socialDescription, 400),
+  }))
+  .handler(async ({ data }) => {
+    await assertAuth();
+    assertSameOrigin();
+    const { saveSeoOverride } = await import("../server/content.server");
+    const { isSeoPath } = await import("../data/seo-pages");
+
+    if (!isSeoPath(data.path)) throw new Error("bad_path");
+    saveSeoOverride(data.path, data);
+    return { ok: true as const };
+  });
+
+export const saveSupportTariffs = createServerFn({ method: "POST" })
+  .validator((data: { items?: unknown[] }) => ({
+    items: Array.isArray(data?.items) ? data.items : [],
+  }))
+  .handler(async ({ data }) => {
+    await assertAuth();
+    assertSameOrigin();
+    const { saveSupportPlans } = await import("../server/content.server");
+    const { SUPPORT_PLAN_SEEDS } = await import("../data/service-pages");
+    const allowed = SUPPORT_PLAN_SEEDS.map((plan) => plan.id);
+
+    saveSupportPlans(
+      (data.items as Array<Record<string, unknown>>)
+        .map((raw) => ({
+          id: line(raw.id, 20),
+          name: line(raw.name, 60),
+          priceValue: Math.max(0, Math.round(Number(raw.priceValue) || 0)),
+          priceText: line(raw.priceText, 60),
+          features: Array.isArray(raw.features)
+            ? raw.features
+                .map((f) => line(f, 120))
+                .filter(Boolean)
+                .slice(0, 8)
+            : [],
+        }))
+        .filter((plan) => allowed.includes(plan.id)),
+    );
+    return { ok: true as const };
+  });
+
 export const saveSiteTexts = createServerFn({ method: "POST" })
   .validator((data: { items?: unknown[] }) => ({
     items: Array.isArray(data?.items) ? data.items : [],

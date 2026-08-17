@@ -13,31 +13,70 @@ import type { Saver } from "./use-saver";
  * раздела своя страница, а эти компоненты — то общее, что у них есть.
  */
 
+/**
+ * Счётчик длины под полем.
+ *
+ * Ограничение мягкое — ввести больше можно. Жёсткий запрет здесь вреден:
+ * иногда длиннее действительно нужно, и решать должен владелец, посмотрев
+ * на результат. А вот не предупредить нельзя: длинная надпись на кнопке
+ * в шапке выдавливает пункты меню, длинное название шага сдвигает иконку
+ * относительно трёх соседних карточек — увидеть это можно только на сайте,
+ * а узнать причину неоткуда.
+ */
+function LengthHint({ value, limit }: { value: string; limit: number }) {
+  const length = value.trim().length;
+  const over = length > limit;
+  return (
+    <span
+      className={
+        "shrink-0 text-[11px] tabular-nums " +
+        (over ? "text-amber-600" : "text-muted-foreground/60")
+      }
+      title={over ? `Длиннее ${limit} символов — вёрстка может поехать` : undefined}
+    >
+      {length}/{limit}
+    </span>
+  );
+}
+
 export function TextInput({
   label,
   value,
   onChange,
   hint,
   placeholder,
+  limit,
+  mono,
 }: {
   label: string;
   value: string;
   onChange: (next: string) => void;
   hint?: string;
   placeholder?: string;
+  /** Мягкий предел длины: показывает счётчик и предупреждает при превышении. */
+  limit?: number;
+  /** Моноширинный шрифт — для путей и служебных значений. */
+  mono?: boolean;
 }) {
+  const over = limit !== undefined && value.trim().length > limit;
+
   return (
     <div>
       <div className="flex items-baseline gap-2">
         <span className="text-xs text-muted-foreground">{label}</span>
-        {hint && <span className="text-xs text-muted-foreground/70">— {hint}</span>}
+        {hint && <span className="min-w-0 flex-1 text-xs text-muted-foreground/70">— {hint}</span>}
+        {limit !== undefined && <LengthHint value={value} limit={limit} />}
       </div>
       <input
         value={value}
         onChange={(event) => onChange(event.target.value)}
         placeholder={placeholder}
         aria-label={label}
-        className="mt-1.5 h-10 w-full rounded-lg border border-input bg-background px-3 text-sm outline-none transition placeholder:text-muted-foreground/60 focus:ring-2 focus:ring-ring"
+        className={
+          "mt-1.5 h-10 w-full rounded-lg border bg-background px-3 text-sm outline-none transition placeholder:text-muted-foreground/60 focus:ring-2 focus:ring-ring " +
+          (mono ? "font-mono " : "") +
+          (over ? "border-amber-500/60" : "border-input")
+        }
       />
     </div>
   );
@@ -49,24 +88,74 @@ export function TextArea({
   onChange,
   rows = 3,
   placeholder,
+  hint,
+  limit,
 }: {
   label: string;
   value: string;
   onChange: (next: string) => void;
   rows?: number;
   placeholder?: string;
+  hint?: string;
+  limit?: number;
 }) {
+  const over = limit !== undefined && value.trim().length > limit;
+
   return (
     <div>
-      <span className="text-xs text-muted-foreground">{label}</span>
+      <div className="flex items-baseline gap-2">
+        <span className="text-xs text-muted-foreground">{label}</span>
+        {hint && <span className="min-w-0 flex-1 text-xs text-muted-foreground/70">— {hint}</span>}
+        {limit !== undefined && <LengthHint value={value} limit={limit} />}
+      </div>
       <textarea
         value={value}
         onChange={(event) => onChange(event.target.value)}
         rows={rows}
         placeholder={placeholder}
         aria-label={label}
-        className="mt-1.5 w-full resize-y rounded-lg border border-input bg-background px-3 py-2.5 text-sm outline-none transition placeholder:text-muted-foreground/60 focus:ring-2 focus:ring-ring"
+        className={
+          "mt-1.5 w-full resize-y rounded-lg border bg-background px-3 py-2.5 text-sm outline-none transition placeholder:text-muted-foreground/60 focus:ring-2 focus:ring-ring " +
+          (over ? "border-amber-500/60" : "border-input")
+        }
       />
+    </div>
+  );
+}
+
+/**
+ * Предпросмотр строки с выделением звёздочками — прямо под полем.
+ *
+ * Без него владелец узнаёт о забытой звёздочке, только открыв сайт: в поле
+ * лежит «Сайт, который *не теряет заявки», а на странице появляется голая
+ * звёздочка посреди заголовка. Здесь непарная звёздочка видна сразу,
+ * и рядом сказано, что с ней не так.
+ */
+export function AccentPreview({ value }: { value: string }) {
+  const stars = (value.match(/\*/g) ?? []).length;
+  const unbalanced = stars % 2 === 1;
+
+  const parts = value.split(/(\*[^*]+\*)/g).filter(Boolean);
+
+  return (
+    <div className="mt-1.5 flex flex-wrap items-baseline gap-x-2 gap-y-1">
+      <span className="text-[11px] text-muted-foreground/70">на сайте:</span>
+      <span className="text-sm">
+        {parts.map((part, i) =>
+          part.startsWith("*") && part.endsWith("*") && part.length > 2 ? (
+            <span key={i} className="text-accent">
+              {part.slice(1, -1)}
+            </span>
+          ) : (
+            <span key={i}>{part}</span>
+          ),
+        )}
+      </span>
+      {unbalanced && (
+        <span className="text-[11px] text-amber-600">
+          звёздочка не закрыта — она попадёт на сайт
+        </span>
+      )}
     </div>
   );
 }

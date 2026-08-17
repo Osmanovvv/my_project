@@ -10,6 +10,7 @@
 import type { DetailedHTMLProps, LinkHTMLAttributes, MetaHTMLAttributes } from "react";
 
 import type { Service } from "../data/services";
+import { SEO_DEFAULTS, type SeoEntry } from "../data/seo-pages";
 
 /** Типы элементов, которые принимает `head()` роута. */
 export type HeadMetaTag = DetailedHTMLProps<MetaHTMLAttributes<HTMLMetaElement>, HTMLMetaElement>;
@@ -84,6 +85,52 @@ export function seo({
     ],
     links: [{ rel: "canonical", href: url }],
   };
+}
+
+/**
+ * Мета-теги страницы: значения из админки, если они есть, иначе из кода.
+ *
+ * ПОЧЕМУ ЗНАЧЕНИЯ ПРИХОДЯТ ПАРАМЕТРОМ, А НЕ ИЗ ЗАГРУЗЧИКА КОРНЯ. Так было
+ * задумано сначала: редактируемый контент грузится один раз в корне, а
+ * страницы читают его из общего снимка. Для `head()` это не работает —
+ * проверено: в списке совпавших роутов у корневого элемента поля `loaderData`
+ * нет вовсе, потому что мета-теги считаются до того, как загрузчики отдали
+ * данные. Страница получает только СВОЙ `loaderData`.
+ *
+ * Отсюда правило: страница, которая хочет редактируемые мета-теги, обязана
+ * загрузить их сама — `fetchPageMeta` или свой загрузчик, который их включает.
+ *
+ * Ровно на этом и горела прежняя страница вопросов: она брала список из
+ * `match.context`, где лежит контекст роутера, а не данные. Молча получался
+ * пустой массив, и в разметку FAQPage уходило `mainEntity: []` — поисковику
+ * сообщалось, что вопросов на странице нет ни одного, при том что страница
+ * целиком из них и состоит.
+ */
+export function pageSeo(
+  path: string,
+  meta?: { seo?: SeoEntry | null } | null,
+  extra?: { type?: "website" | "article"; image?: string },
+): { meta: HeadMetaTag[]; links: HeadLinkTag[] } {
+  /* Значений из базы нет — берутся из кода. Это не сбой, а обычное состояние
+     при предзагрузке ссылки: страница получает осмысленные теги, а не пустые. */
+  const entry = meta?.seo ?? SEO_DEFAULTS[path];
+
+  if (!entry) {
+    /* Путь, которого нет в каталоге страниц: возможно только при опечатке
+       в вызове. Пусть она будет видна в логе, а не молча превратится
+       в страницу без заголовка. */
+    console.warn(`[seo] нет описания для пути ${path}`);
+    return { meta: [], links: [{ rel: "canonical", href: absoluteUrl(path) }] };
+  }
+
+  return seo({
+    title: entry.title,
+    description: entry.description,
+    path,
+    socialTitle: entry.socialTitle || undefined,
+    socialDescription: entry.socialDescription || undefined,
+    ...extra,
+  });
 }
 
 /**

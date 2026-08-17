@@ -1,4 +1,4 @@
-import { Link } from "@tanstack/react-router";
+import { Link, useLoaderData } from "@tanstack/react-router";
 import type { LucideIcon } from "lucide-react";
 import type { ReactNode } from "react";
 import { ArrowLeft, ArrowRight } from "lucide-react";
@@ -29,6 +29,12 @@ export function ServiceDetailLayout({
   accentColor = "indigo",
   children,
 }: Props) {
+  /* Надписи кнопок — из снимка контента: одна строка на смысл, а не своя
+     копия в каждом файле. Раньше «Получить разбор» стояла в четырёх местах,
+     и правка по отдельности рано или поздно дала бы сайт, где в шапке одно,
+     а на странице услуги другое. */
+  const { texts } = useLoaderData({ from: "__root__" });
+
   return (
     <>
       <section className="relative overflow-hidden border-b border-border/60">
@@ -75,10 +81,10 @@ export function ServiceDetailLayout({
               </p>
               <div className="mt-8 flex flex-wrap gap-3">
                 <CtaLink to="/contacts">
-                  Получить разбор <ArrowRight className="h-4 w-4" />
+                  {texts["cta.primary"]} <ArrowRight className="h-4 w-4" />
                 </CtaLink>
                 <CtaLink to="/works" variant="secondary">
-                  Смотреть работы
+                  {texts["cta.works"]}
                 </CtaLink>
               </div>
             </div>

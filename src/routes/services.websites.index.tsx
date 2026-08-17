@@ -2,20 +2,14 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowRight, Globe, Zap, ShoppingBag, Layout, Search, Check } from "lucide-react";
 import { ServiceDetailLayout } from "../components/site/ServiceDetailLayout";
 import { getService } from "../data/services";
-import { seo } from "../lib/seo";
+import { fetchPageMeta } from "../lib/content.rpc";
+import { pageSeo } from "../lib/seo";
 import { SectionEyebrow } from "../components/site/SectionEyebrow";
 import { CheckMark } from "../components/site/CheckMark";
 
 export const Route = createFileRoute("/services/websites/")({
-  head: () =>
-    seo({
-      title: "Сайты — Услуги IT-Agent",
-      description:
-        "Лендинги, корпоративные сайты и e-commerce. Быстро, красиво, с ботом и админкой.",
-      path: "/services/websites",
-      socialTitle: "Сайты — IT-Agent",
-      socialDescription: "Лендинги, корпоративные сайты, e-commerce и MiniApp.",
-    }),
+  loader: () => fetchPageMeta({ data: { path: "/services/websites" } }),
+  head: ({ loaderData }) => pageSeo("/services/websites", loaderData),
   component: WebsitesPage,
 });
 

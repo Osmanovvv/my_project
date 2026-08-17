@@ -11,20 +11,14 @@ import {
   Check,
 } from "lucide-react";
 import { ServiceDetailLayout } from "../components/site/ServiceDetailLayout";
-import { seo } from "../lib/seo";
+import { fetchPageMeta } from "../lib/content.rpc";
+import { pageSeo } from "../lib/seo";
 import { SectionEyebrow } from "../components/site/SectionEyebrow";
 import { CheckMark } from "../components/site/CheckMark";
 
 export const Route = createFileRoute("/services/bots/")({
-  head: () =>
-    seo({
-      title: "Боты и MiniApp — Услуги IT-Agent",
-      description:
-        "Telegram и MAX боты, Telegram MiniApp: заказы, оплаты, поддержка, программы лояльности.",
-      path: "/services/bots",
-      socialTitle: "Боты и MiniApp — IT-Agent",
-      socialDescription: "Чат-боты Telegram и MAX, а также MiniApp внутри мессенджеров.",
-    }),
+  loader: () => fetchPageMeta({ data: { path: "/services/bots" } }),
+  head: ({ loaderData }) => pageSeo("/services/bots", loaderData),
   component: BotsPage,
 });
 

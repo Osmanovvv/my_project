@@ -1,7 +1,8 @@
-import { Link } from "@tanstack/react-router";
+import { Link, useLoaderData } from "@tanstack/react-router";
 import { Mascot } from "./Mascot";
 
 export function SiteFooter() {
+  const { texts } = useLoaderData({ from: "__root__" });
   return (
     <footer className="relative border-t border-border/60 mt-24 overflow-hidden">
       <div className="pointer-events-none absolute -top-24 left-1/2 -translate-x-1/2 h-64 w-[600px] rounded-full bg-accent/10 blur-3xl" />
@@ -18,9 +19,7 @@ export function SiteFooter() {
               style={{ animation: "mascot-float 6s ease-in-out infinite" }}
             />
           </div>
-          <p className="text-sm text-muted-foreground max-w-md">
-            IT-Agent всегда на связи — сайт, бот и админка в одной системе.
-          </p>
+          <p className="text-sm text-muted-foreground max-w-md">{texts["footer.tagline"]}</p>
         </div>
 
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6 pt-6 border-t border-border/60">

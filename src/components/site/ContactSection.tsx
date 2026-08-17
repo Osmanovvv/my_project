@@ -1,7 +1,9 @@
 import { useId, useState, type FormEvent } from "react";
+import { useLoaderData } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { ArrowRight, Check, TriangleAlert } from "lucide-react";
 import { readAttribution } from "../../lib/attribution";
+import { AccentText } from "./AccentText";
 import { SectionEyebrow } from "./SectionEyebrow";
 import { CheckMark } from "./CheckMark";
 import {
@@ -36,6 +38,9 @@ const ERROR_MESSAGES: Record<string, string> = {
 const FALLBACK_MESSAGE = "Не получилось отправить. Попробуйте ещё раз через минуту.";
 
 export function ContactSection({ compact = false, id }: Props) {
+  /* Тексты блока — из снимка контента. Блок стоит внизу почти каждой
+     страницы, поэтому правится один раз для всего сайта. */
+  const { texts } = useLoaderData({ from: "__root__" });
   const [status, setStatus] = useState<Status>("idle");
   const [errors, setErrors] = useState<LeadErrors>({});
   const [failure, setFailure] = useState<string | null>(null);
@@ -123,11 +128,14 @@ export function ContactSection({ compact = false, id }: Props) {
 
   const sending = status === "sending";
 
+  /* Ровно три пункта, без возможности добавить. Список стоит колонкой
+     рядом с формой и выровнен с ней по высоте: четвёртый пункт вытянул бы
+     колонку ниже формы и разъехался бы с ней. */
   const afterPoints = [
-    "Ответим в Telegram или по телефону",
-    "Разберём задачу — без ТЗ и обязательств",
-    "Предложим, с чего начать",
-  ];
+    texts["contact.point1"],
+    texts["contact.point2"],
+    texts["contact.point3"],
+  ].filter(Boolean);
 
   return (
     <section
@@ -136,12 +144,11 @@ export function ContactSection({ compact = false, id }: Props) {
     >
       <div className="grid lg:grid-cols-2 gap-10 lg:gap-16 items-start">
         <div>
-          <SectionEyebrow>Первый шаг</SectionEyebrow>
-          <h2 className="mt-3 text-3xl sm:text-4xl font-display">Получить разбор системы заявок</h2>
-          <p className="mt-4 text-muted-foreground max-w-md">
-            Оставьте контакт — вернёмся с коротким разбором вашей ситуации. Никакого длинного ТЗ на
-            старте не нужно.
-          </p>
+          <SectionEyebrow>{texts["contact.eyebrow"]}</SectionEyebrow>
+          <h2 className="mt-3 text-3xl sm:text-4xl font-display">
+            <AccentText text={texts["contact.title"]} />
+          </h2>
+          <p className="mt-4 text-muted-foreground max-w-md">{texts["contact.lead"]}</p>
 
           <ul className="mt-8 space-y-3">
             {afterPoints.map((p) => (
@@ -212,7 +219,7 @@ export function ContactSection({ compact = false, id }: Props) {
               onInput={() => clearError("task")}
               aria-invalid={errors.task ? true : undefined}
               aria-describedby={errors.task ? `${fieldId("task")}-error` : undefined}
-              placeholder="Например: интернет-магазин, много заявок теряется"
+              placeholder={texts["contact.taskPlaceholder"]}
               className={
                 "mt-2 w-full rounded-lg bg-background border px-3.5 py-3 text-sm placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-ring resize-none " +
                 (errors.task ? "border-destructive" : "border-input")
@@ -230,7 +237,7 @@ export function ContactSection({ compact = false, id }: Props) {
             disabled={sending}
             className="w-full inline-flex h-12 items-center justify-center gap-2 rounded-lg bg-accent text-accent-foreground text-sm font-medium transition hover:brightness-110 disabled:opacity-70 disabled:cursor-not-allowed"
           >
-            {sending ? "Отправляем…" : "Отправить заявку"}
+            {sending ? "Отправляем…" : texts["contact.submit"]}
             {!sending && <ArrowRight className="h-4 w-4" />}
           </button>
 
@@ -244,7 +251,7 @@ export function ContactSection({ compact = false, id }: Props) {
               className="flex items-start gap-2.5 rounded-lg border border-accent/30 bg-accent-soft p-3.5 text-sm text-foreground"
             >
               <CheckMark />
-              <span>Заявка отправлена — свяжемся в течение рабочего дня.</span>
+              <span>{texts["contact.success"]}</span>
             </div>
           )}
 
@@ -260,9 +267,7 @@ export function ContactSection({ compact = false, id }: Props) {
             </div>
           )}
 
-          <p className="text-xs text-muted-foreground text-center">
-            Нажимая, вы соглашаетесь на обработку контактных данных.
-          </p>
+          <p className="text-xs text-muted-foreground text-center">{texts["contact.consent"]}</p>
         </form>
       </div>
     </section>
