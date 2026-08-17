@@ -1,13 +1,15 @@
 import { createFileRoute } from "@tanstack/react-router";
 
 import { SITE_URL } from "../lib/seo";
-import { originFromRequest, SITE_URLS } from "../lib/site-urls";
+import { originFromRequest, siteUrls } from "../lib/site-urls";
+import { publishedCases } from "../server/cases.server";
 
 /**
  * GET /sitemap.xml
  *
- * Список страниц собирается из каталогов услуг и кейсов — новая услуга или
- * кейс попадают в карту сайта автоматически.
+ * Страницы услуг берутся из каталога в коде, кейсы — из базы на момент
+ * запроса. Опубликовал кейс в админке — он в карте сайта сразу, без
+ * пересборки и перезапуска. Черновики сюда не попадают.
  */
 function escapeXml(value: string): string {
   return value
@@ -21,15 +23,19 @@ function escapeXml(value: string): string {
 function handleSitemap({ request }: { request: Request }): Response {
   const origin = originFromRequest(request, SITE_URL);
 
-  const entries = SITE_URLS.map(({ path, priority, changefreq }) =>
-    [
-      "  <url>",
-      `    <loc>${escapeXml(`${origin}${path === "/" ? "/" : path}`)}</loc>`,
-      `    <changefreq>${changefreq}</changefreq>`,
-      `    <priority>${priority.toFixed(1)}</priority>`,
-      "  </url>",
-    ].join("\n"),
-  ).join("\n");
+  const slugs = publishedCases().map((item) => item.slug);
+
+  const entries = siteUrls(slugs)
+    .map(({ path, priority, changefreq }) =>
+      [
+        "  <url>",
+        `    <loc>${escapeXml(`${origin}${path === "/" ? "/" : path}`)}</loc>`,
+        `    <changefreq>${changefreq}</changefreq>`,
+        `    <priority>${priority.toFixed(1)}</priority>`,
+        "  </url>",
+      ].join("\n"),
+    )
+    .join("\n");
 
   const body = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">

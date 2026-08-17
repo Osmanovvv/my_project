@@ -83,4 +83,66 @@ export const MIGRATIONS: Migration[] = [
       CREATE INDEX admin_session_expiry ON admin_session (expires_at);
     `,
   },
+
+  {
+    version: 2,
+    name: "Кейсы и картинки",
+    up: `
+      -- Загруженные файлы. Сами файлы лежат в DATA_DIR/media, здесь — описание.
+      -- Таблица заводится сейчас, хотя загрузка появится позже: добавить
+      -- внешний ключ в уже существующую таблицу SQLite умеет только через
+      -- пересоздание, и делать это на живых данных не хочется.
+      CREATE TABLE media (
+        id          INTEGER PRIMARY KEY AUTOINCREMENT,
+        hash        TEXT    NOT NULL,
+        ext         TEXT    NOT NULL,
+        mime        TEXT    NOT NULL,
+        width       INTEGER NOT NULL CHECK (width  > 0),
+        height      INTEGER NOT NULL CHECK (height > 0),
+        bytes       INTEGER NOT NULL,
+        alt         TEXT    NOT NULL DEFAULT '',
+        source_name TEXT    NOT NULL DEFAULT '',
+        created_at  INTEGER NOT NULL,
+        -- Повторная загрузка того же файла не плодит копии на диске.
+        UNIQUE (hash, ext)
+      );
+
+      -- Кейсы. Единственный раздел контента, где записи создаёт владелец:
+      -- заготовки в коде для них быть не может, поэтому здесь полноценный CRUD.
+      --
+      -- Списки (теги, что болело, что предложили) хранятся строками JSON.
+      -- Отдельные таблицы под них дали бы пять джойнов и порядок сортировки
+      -- ради данных, которые всегда читаются и пишутся целиком.
+      CREATE TABLE case_study (
+        slug        TEXT PRIMARY KEY,
+        title       TEXT    NOT NULL,
+        client      TEXT    NOT NULL DEFAULT '',
+        industry    TEXT    NOT NULL DEFAULT '',
+        result      TEXT    NOT NULL DEFAULT '',
+        summary     TEXT    NOT NULL DEFAULT '',
+        timeline    TEXT    NOT NULL DEFAULT '',
+        -- КЛЮЧ пресета, не классы Tailwind: классы из базы сборщик не увидит
+        -- и правил под них не создаст — обложки станут прозрачными.
+        -- См. src/data/case-presets.ts.
+        gradient    TEXT    NOT NULL DEFAULT 'indigo',
+        pattern     TEXT    NOT NULL DEFAULT 'grid',
+        cover_id    INTEGER REFERENCES media(id) ON DELETE SET NULL,
+        tags        TEXT    NOT NULL DEFAULT '[]' CHECK (json_valid(tags)),
+        challenge   TEXT    NOT NULL DEFAULT '[]' CHECK (json_valid(challenge)),
+        solution    TEXT    NOT NULL DEFAULT '[]' CHECK (json_valid(solution)),
+        delivered   TEXT    NOT NULL DEFAULT '[]' CHECK (json_valid(delivered)),
+        stack       TEXT    NOT NULL DEFAULT '[]' CHECK (json_valid(stack)),
+        services    TEXT    NOT NULL DEFAULT '[]' CHECK (json_valid(services)),
+        -- Черновик виден только в админке. Так кейс можно дописывать
+        -- несколько вечеров, не показывая посетителям половину текста.
+        published   INTEGER NOT NULL DEFAULT 0 CHECK (published IN (0,1)),
+        -- Порядок в сетке. Дробный шаг не нужен: записей единицы,
+        -- перестановка переписывает позиции целиком.
+        position    INTEGER NOT NULL DEFAULT 0,
+        created_at  INTEGER NOT NULL,
+        updated_at  INTEGER NOT NULL
+      );
+      CREATE INDEX case_order ON case_study (published, position, created_at);
+    `,
+  },
 ];

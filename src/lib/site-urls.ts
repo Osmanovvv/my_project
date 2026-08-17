@@ -5,7 +5,6 @@
  * они появятся в карте сайта сами, без ручной правки.
  */
 
-import { CASES } from "../data/cases";
 import { SERVICES } from "../data/services";
 
 export type SiteUrl = {
@@ -34,16 +33,26 @@ const SERVICE_PAGES: SiteUrl[] = SERVICES.map((service) => ({
   changefreq: "monthly" as const,
 }));
 
-const CASE_PAGES: SiteUrl[] = CASES.map((item) => ({
-  path: `/works/${item.slug}`,
-  priority: 0.6,
-  changefreq: "yearly" as const,
-}));
+/**
+ * Список страниц собирается функцией, а не константой: кейсы теперь живут
+ * в базе, и карта сайта должна отражать их на момент запроса. Константа
+ * замерзла бы на состоянии, которое было при запуске сервера, — добавленный
+ * из админки кейс не попал бы в sitemap до перезапуска.
+ *
+ * Адреса кейсов передаются аргументом, а не читаются здесь: модуль не
+ * серверный, и тянуть в него `node:sqlite` нельзя.
+ */
+export function siteUrls(caseSlugs: string[] = []): SiteUrl[] {
+  const casePages: SiteUrl[] = caseSlugs.map((slug) => ({
+    path: `/works/${slug}`,
+    priority: 0.6,
+    changefreq: "yearly" as const,
+  }));
 
-/** Уникальные пути в порядке убывания важности. */
-export const SITE_URLS: SiteUrl[] = [...STATIC_PAGES, ...SERVICE_PAGES, ...CASE_PAGES].filter(
-  (entry, index, all) => all.findIndex((other) => other.path === entry.path) === index,
-);
+  return [...STATIC_PAGES, ...SERVICE_PAGES, ...casePages].filter(
+    (entry, index, list) => list.findIndex((other) => other.path === entry.path) === index,
+  );
+}
 
 /**
  * Определяет origin по заголовкам запроса — сайт может жить на превью-домене

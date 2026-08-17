@@ -5,13 +5,16 @@ import { PageHero } from "../components/site/PageHero";
 import { Portfolio } from "../components/site/Portfolio";
 import { ContactSection } from "../components/site/ContactSection";
 import { Mascot } from "../components/site/Mascot";
-import { CASES, CASE_TAGS, filterCases, type CaseTag } from "../data/cases";
+import { filterCases, tagsOf, type CaseTag } from "../data/cases";
+import { fetchCases } from "../lib/content.rpc";
 import { absoluteUrl, jsonLd, seo, SITE_NAME } from "../lib/seo";
 import { SectionEyebrow } from "../components/site/SectionEyebrow";
 import { CtaLink } from "../components/site/CtaLink";
 
 export const Route = createFileRoute("/works/")({
-  head: () => {
+  loader: () => fetchCases(),
+  head: ({ loaderData }) => {
+    const cases = loaderData ?? [];
     const base = seo({
       title: "Портфолио: сайты, Telegram-боты и админки | IT-Agent",
       description:
@@ -29,7 +32,7 @@ export const Route = createFileRoute("/works/")({
           name: "Работы IT-Agent",
           url: absoluteUrl("/works"),
           isPartOf: { "@type": "WebSite", name: SITE_NAME, url: absoluteUrl("/") },
-          hasPart: CASES.map((item) => ({
+          hasPart: cases.map((item) => ({
             "@type": "CreativeWork",
             name: item.title,
             url: absoluteUrl(`/works/${item.slug}`),
@@ -41,8 +44,6 @@ export const Route = createFileRoute("/works/")({
   component: WorksPage,
 });
 
-const filters = ["Все", ...CASE_TAGS] as const;
-
 const stats = [
   { v: "40+", label: "проектов запущено" },
   { v: "12", label: "отраслей" },
@@ -50,9 +51,14 @@ const stats = [
 ];
 
 function WorksPage() {
-  const [active, setActive] = useState<(typeof filters)[number]>("Все");
+  const cases = Route.useLoaderData();
+  const [active, setActive] = useState<CaseTag | "Все">("Все");
 
-  const visible = useMemo(() => filterCases(active), [active]);
+  /* Фильтры строятся по тому, что реально есть в базе: кейс с тегом
+     «MiniApp» может появиться завтра, а может не появиться никогда —
+     вкладка, всегда дающая пустой список, только мешает. */
+  const filters = useMemo(() => ["Все", ...tagsOf(cases)] as const, [cases]);
+  const visible = useMemo(() => filterCases(cases, active), [cases, active]);
 
   const description =
     active === "Все"
@@ -90,7 +96,7 @@ function WorksPage() {
             <Filter className="h-3.5 w-3.5" /> Фильтр
           </span>
           {filters.map((t) => {
-            const count = t === "Все" ? CASES.length : filterCases(t as CaseTag).length;
+            const count = t === "Все" ? cases.length : filterCases(cases, t as CaseTag).length;
             return (
               <button
                 key={t}

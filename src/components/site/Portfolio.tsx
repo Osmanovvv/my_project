@@ -1,13 +1,16 @@
 import { useId } from "react";
 import { Link } from "@tanstack/react-router";
 import { ArrowUpRight } from "lucide-react";
-import { CASES, type CasePattern, type CaseStudy } from "../../data/cases";
+import type { CaseStudy } from "../../data/cases";
+import { gradientClasses, type CasePattern } from "../../data/case-presets";
 
 /**
- * Сетка кейсов. Раньше карточки вели на `href="#"` — шесть ссылок в никуда;
- * теперь каждая открывает свою страницу `/works/$slug`.
+ * Сетка кейсов.
+ *
+ * Кейсы приходят пропом: они живут в базе, а этот компонент рендерится и на
+ * клиенте — читать базу отсюда нельзя. Загружает их страница в своём loader.
  */
-export function Portfolio({ cases = CASES }: { cases?: CaseStudy[] }) {
+export function Portfolio({ cases }: { cases: CaseStudy[] }) {
   if (cases.length === 0) {
     return (
       <p className="rounded-2xl border border-border bg-surface p-8 text-center text-sm text-muted-foreground">
@@ -25,7 +28,12 @@ export function Portfolio({ cases = CASES }: { cases?: CaseStudy[] }) {
           params={{ slug: c.slug }}
           className="group relative flex flex-col overflow-hidden rounded-3xl border border-border bg-surface hover:border-accent/40 hover:card-lift transition-all duration-300"
         >
-          <div className={`relative aspect-[4/3] bg-gradient-to-br ${c.gradient} overflow-hidden`}>
+          {/* Классы градиента подставляются из реестра по ключу: в базе
+              лежит `indigo`, а не строка классов — иначе Tailwind не увидел бы
+              их при сборке и обложка осталась бы прозрачной. */}
+          <div
+            className={`relative aspect-[4/3] bg-gradient-to-br ${gradientClasses(c.gradient)} overflow-hidden`}
+          >
             <Pattern kind={c.pattern} />
             {/* Плашка тёмная, а не светлая: градиенты карточек разной светлоты,
                 и на янтарном или бирюзовом белый текст на `bg-white/20`

@@ -1,17 +1,20 @@
 /**
- * Кейсы портфолио — источник для сетки `/works` и страниц `/works/$slug`.
+ * Кейсы: тип, вспомогательные функции и данные для первичного заполнения базы.
  *
- * ⚠️ ДЕМО-КОНТЕНТ. Проекты, клиенты и цифры результата перенесены из шаблона
- * и НЕ являются подтверждёнными данными. Перед публичным запуском замените
- * на реальные проекты (или уберите блок `result`, если цифр нет) — иначе
- * это заявления о результатах, которых не было.
+ * С этого момента источник правды — база: кейсы создаёт владелец через
+ * админку. Массив ниже используется ОДИН раз, когда база пуста, чтобы сайт
+ * после переезда выглядел ровно так же, как выглядел из файла.
+ *
+ * ⚠️ СОДЕРЖИМОЕ НИЖЕ ВЫДУМАНО. Клиентов, проектов и результатов не было:
+ * это осталось от шаблона. Заполнение нужно только чтобы переезд на базу
+ * ничего не сдвинул; заменить на настоящие проекты — отдельная задача,
+ * и делается она уже из админки, а не правкой этого файла.
  */
 
 import type { ServiceId } from "./services";
+import type { CasePattern, GradientKey } from "./case-presets";
 
 export type CaseTag = "Сайт" | "Бот" | "Админка" | "MiniApp";
-
-export type CasePattern = "grid" | "waves" | "dots" | "circles" | "diagonals" | "blocks";
 
 export type CaseStudy = {
   slug: string;
@@ -22,7 +25,8 @@ export type CaseStudy = {
   tags: CaseTag[];
   /** Короткий итог для карточки. */
   result: string;
-  gradient: string;
+  /** Ключ пресета обложки, НЕ классы Tailwind. См. `case-presets.ts`. */
+  gradient: GradientKey;
   pattern: CasePattern;
   /** Абзац-подводка на странице кейса. */
   summary: string;
@@ -36,9 +40,16 @@ export type CaseStudy = {
   timeline: string;
   /** Связанные услуги — для перелинковки. */
   services: ServiceId[];
+  /** Черновик виден только в админке. */
+  published: boolean;
+  /** Порядок в сетке; меньше — раньше. */
+  position: number;
 };
 
-export const CASES: CaseStudy[] = [
+/** Порядок тегов в фильтре — одинаковый на сайте и в админке. */
+export const TAG_ORDER: CaseTag[] = ["Сайт", "Бот", "Админка", "MiniApp"];
+
+export const LEGACY_CASES: CaseStudy[] = [
   {
     slug: "ceramics-shop",
     title: "Магазин керамики",
@@ -46,7 +57,7 @@ export const CASES: CaseStudy[] = [
     industry: "Розница и хендмейд",
     tags: ["Сайт", "Бот", "Админка"],
     result: "+62% заявок за месяц",
-    gradient: "from-indigo-500/90 via-purple-500/80 to-pink-400/70",
+    gradient: "indigo",
     pattern: "circles",
     summary:
       "Мастерская продавала через личные сообщения в соцсетях: заказы терялись в переписке, а остатки помнили только на словах.",
@@ -68,6 +79,8 @@ export const CASES: CaseStudy[] = [
     stack: ["Сайт-витрина", "Telegram Bot API", "Админка заявок"],
     timeline: "4 недели",
     services: ["websites/landing", "bots/telegram"],
+    published: true,
+    position: 0,
   },
   {
     slug: "aesthetic-clinic",
@@ -76,7 +89,7 @@ export const CASES: CaseStudy[] = [
     industry: "Медицина и красота",
     tags: ["Сайт", "Админка"],
     result: "Заявки не теряются между филиалами",
-    gradient: "from-teal-400/90 via-cyan-500/80 to-blue-500/80",
+    gradient: "teal",
     pattern: "waves",
     summary:
       "Три филиала вели записи каждый по-своему: у одного тетрадь, у другого таблица. Клиент, записавшийся не туда, просто терялся.",
@@ -98,6 +111,8 @@ export const CASES: CaseStudy[] = [
     stack: ["Корпоративный сайт", "Админка заявок", "Telegram-уведомления"],
     timeline: "6 недель",
     services: ["websites/corporate"],
+    published: true,
+    position: 1,
   },
   {
     slug: "online-school",
@@ -106,7 +121,7 @@ export const CASES: CaseStudy[] = [
     industry: "Образование",
     tags: ["Сайт", "Бот"],
     result: "×2 конверсия в оплату",
-    gradient: "from-amber-400/90 via-orange-500/80 to-rose-500/80",
+    gradient: "amber",
     pattern: "dots",
     summary:
       "Между «оставил заявку» и «оплатил» проходило несколько дней ручной переписки — на этом отрезке отваливалась половина людей.",
@@ -128,6 +143,8 @@ export const CASES: CaseStudy[] = [
     stack: ["Лендинг", "Telegram-бот", "Автоворонки"],
     timeline: "3 недели",
     services: ["websites/landing", "bots/telegram"],
+    published: true,
+    position: 2,
   },
   {
     slug: "auto-service",
@@ -136,7 +153,7 @@ export const CASES: CaseStudy[] = [
     industry: "Услуги и сервис",
     tags: ["Бот", "Админка"],
     result: "−80% пропущенных записей",
-    gradient: "from-slate-700/90 via-slate-800/90 to-slate-900/90",
+    gradient: "slate",
     pattern: "diagonals",
     summary:
       "Клиенты записывались по телефону и забывали приехать. Пустой подъёмник — это прямой убыток за смену.",
@@ -158,6 +175,8 @@ export const CASES: CaseStudy[] = [
     stack: ["Telegram-бот", "Админка записей", "Напоминания"],
     timeline: "3 недели",
     services: ["bots/telegram"],
+    published: true,
+    position: 3,
   },
   {
     slug: "apartment-renovation",
@@ -166,7 +185,7 @@ export const CASES: CaseStudy[] = [
     industry: "Строительство и ремонт",
     tags: ["Сайт", "Бот", "Админка"],
     result: "Автораспределение по бригадам",
-    gradient: "from-emerald-500/90 via-teal-600/80 to-slate-800/80",
+    gradient: "emerald",
     pattern: "blocks",
     summary:
       "Заявки со всего города сваливались в один чат, и бригадиры разбирали их вручную — кто первый увидел, тот и поехал.",
@@ -188,6 +207,8 @@ export const CASES: CaseStudy[] = [
     stack: ["Сайт", "Telegram-бот", "Правила распределения"],
     timeline: "7 недель",
     services: ["websites/corporate", "bots/telegram"],
+    published: true,
+    position: 4,
   },
   {
     slug: "b2b-catalog",
@@ -196,7 +217,7 @@ export const CASES: CaseStudy[] = [
     industry: "Оптовая торговля",
     tags: ["Сайт", "Админка"],
     result: "Каталог 2000+ позиций",
-    gradient: "from-violet-600/90 via-indigo-700/80 to-slate-900/80",
+    gradient: "violet",
     pattern: "grid",
     summary:
       "Прайс рассылали Excel-файлом. Клиенты работали по устаревшим ценам, а менеджеры пересчитывали заказы вручную.",
@@ -218,44 +239,35 @@ export const CASES: CaseStudy[] = [
     stack: ["Корпоративный сайт", "Каталог", "Админка заявок"],
     timeline: "8 недель",
     services: ["websites/corporate", "websites/ecommerce"],
+    published: true,
+    position: 5,
   },
 ];
 
-export const CASE_BY_SLUG = Object.fromEntries(CASES.map((item) => [item.slug, item])) as Record<
-  string,
-  CaseStudy | undefined
->;
+// ─────────────────────────────────────── функции над готовым списком ────────
+// Чистые: получают массив кейсов (из базы) и ничего сами не загружают.
 
-export function getCase(slug: string): CaseStudy | undefined {
-  return CASE_BY_SLUG[slug];
+/** Теги для фильтра — только те, что реально встречаются. */
+export function tagsOf(cases: CaseStudy[]): CaseTag[] {
+  return TAG_ORDER.filter((tag) => cases.some((item) => item.tags.includes(tag)));
 }
 
-const TAG_ORDER: CaseTag[] = ["Сайт", "Бот", "Админка", "MiniApp"];
-
-/**
- * Теги для фильтра на `/works` — только те, что реально встречаются в кейсах.
- * Иначе в фильтре висит вариант, который всегда даёт пустой список.
- */
-export const CASE_TAGS: CaseTag[] = TAG_ORDER.filter((tag) =>
-  CASES.some((item) => item.tags.includes(tag)),
-);
-
-export function filterCases(tag: CaseTag | "Все"): CaseStudy[] {
-  if (tag === "Все") return CASES;
-  return CASES.filter((item) => item.tags.includes(tag));
+export function filterCases(cases: CaseStudy[], tag: CaseTag | "Все"): CaseStudy[] {
+  if (tag === "Все") return cases;
+  return cases.filter((item) => item.tags.includes(tag));
 }
 
 /** Соседние кейсы для перелинковки внизу страницы кейса. */
-export function relatedCases(slug: string, limit = 3): CaseStudy[] {
-  const current = getCase(slug);
-  if (!current) return CASES.slice(0, limit);
+export function relatedCases(cases: CaseStudy[], slug: string, limit = 3): CaseStudy[] {
+  const current = cases.find((item) => item.slug === slug);
+  if (!current) return cases.slice(0, limit);
 
-  const scored = CASES.filter((item) => item.slug !== slug).map((item) => ({
-    item,
-    score: item.tags.filter((tag) => current.tags.includes(tag)).length,
-  }));
-
-  return scored
+  return cases
+    .filter((item) => item.slug !== slug)
+    .map((item) => ({
+      item,
+      score: item.tags.filter((tag) => current.tags.includes(tag)).length,
+    }))
     .sort((a, b) => b.score - a.score)
     .slice(0, limit)
     .map((entry) => entry.item);

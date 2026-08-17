@@ -2,28 +2,32 @@ import { Link, createFileRoute, notFound } from "@tanstack/react-router";
 import { ArrowLeft, ArrowRight, Check, Clock, Layers, Target } from "lucide-react";
 import { ContactSection } from "../components/site/ContactSection";
 import { Pattern } from "../components/site/Portfolio";
-import { getCase, relatedCases } from "../data/cases";
+import { gradientClasses } from "../data/case-presets";
+import { fetchCasePage } from "../lib/content.rpc";
 import { SERVICE_BY_ID } from "../data/services";
 import { absoluteUrl, jsonLd, seo, SITE_NAME } from "../lib/seo";
 import { SectionEyebrow } from "../components/site/SectionEyebrow";
 import { CheckMark } from "../components/site/CheckMark";
 
 export const Route = createFileRoute("/works/$slug")({
-  /* Неизвестный slug — 404, а не пустая страница. */
-  loader: ({ params }) => {
-    const study = getCase(params.slug);
-    if (!study) throw notFound();
-    return study;
+  /* Неизвестный или неопубликованный slug — 404, а не пустая страница.
+     Черновик снаружи не показывается: `fetchCasePage` отдаёт только
+     опубликованные. */
+  loader: async ({ params }) => {
+    const page = await fetchCasePage({ data: { slug: params.slug } });
+    if (!page.study) throw notFound();
+    return { study: page.study, related: page.related };
   },
   head: ({ loaderData }) => {
-    if (!loaderData) return {};
+    if (!loaderData?.study) return {};
+    const study = loaderData.study;
 
-    const path = `/works/${loaderData.slug}`;
+    const path = `/works/${study.slug}`;
     const base = seo({
-      title: `${loaderData.title} — работы IT-Agent`,
-      description: loaderData.summary,
+      title: `${study.title} — работы IT-Agent`,
+      description: study.summary,
       path,
-      socialTitle: `${loaderData.title} · ${loaderData.result}`,
+      socialTitle: `${study.title} · ${study.result}`,
       type: "article",
     });
 
@@ -34,12 +38,12 @@ export const Route = createFileRoute("/works/$slug")({
         jsonLd({
           "@context": "https://schema.org",
           "@type": "CreativeWork",
-          name: loaderData.title,
-          headline: `${loaderData.title} — ${loaderData.result}`,
-          description: loaderData.summary,
+          name: study.title,
+          headline: `${study.title} — ${study.result}`,
+          description: study.summary,
           url: absoluteUrl(path),
-          about: loaderData.industry,
-          keywords: loaderData.tags.join(", "),
+          about: study.industry,
+          keywords: study.tags.join(", "),
           creator: { "@type": "Organization", name: SITE_NAME, url: absoluteUrl("/") },
         }),
         jsonLd({
@@ -48,7 +52,7 @@ export const Route = createFileRoute("/works/$slug")({
           itemListElement: [
             { "@type": "ListItem", position: 1, name: "Главная", item: absoluteUrl("/") },
             { "@type": "ListItem", position: 2, name: "Работы", item: absoluteUrl("/works") },
-            { "@type": "ListItem", position: 3, name: loaderData.title, item: absoluteUrl(path) },
+            { "@type": "ListItem", position: 3, name: study.title, item: absoluteUrl(path) },
           ],
         }),
       ],
@@ -58,8 +62,7 @@ export const Route = createFileRoute("/works/$slug")({
 });
 
 function CasePage() {
-  const study = Route.useLoaderData();
-  const related = relatedCases(study.slug);
+  const { study, related } = Route.useLoaderData();
   const services = study.services.map((id) => SERVICE_BY_ID[id]);
 
   return (
@@ -111,7 +114,7 @@ function CasePage() {
 
             {/* Обложка — тот же паттерн, что в карточке на /works */}
             <div
-              className={`relative aspect-[4/3] overflow-hidden rounded-3xl border border-border bg-gradient-to-br ${study.gradient}`}
+              className={`relative aspect-[4/3] overflow-hidden rounded-3xl border border-border bg-gradient-to-br ${gradientClasses(study.gradient)}`}
             >
               <Pattern kind={study.pattern} />
               <div className="absolute inset-x-0 bottom-0 p-6">
@@ -232,7 +235,7 @@ function CasePage() {
                 className="group overflow-hidden rounded-2xl border border-border bg-surface transition hover:border-accent/40"
               >
                 <div
-                  className={`relative aspect-[16/9] bg-gradient-to-br ${item.gradient} overflow-hidden`}
+                  className={`relative aspect-[16/9] bg-gradient-to-br ${gradientClasses(item.gradient)} overflow-hidden`}
                 >
                   <Pattern kind={item.pattern} />
                 </div>

@@ -12,6 +12,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { CATALOG, type ServiceId } from "../data/services";
+import { fetchCases } from "../lib/content.rpc";
 import { seo } from "../lib/seo";
 import { ContactSection } from "../components/site/ContactSection";
 import { Packages } from "../components/site/Packages";
@@ -26,6 +27,7 @@ import { CtaLink } from "../components/site/CtaLink";
 import { ServiceCard } from "../components/site/ServiceCard";
 
 export const Route = createFileRoute("/")({
+  loader: () => fetchCases(),
   head: () =>
     seo({
       title: "IT-Agent — Сайт, бот и админка для заявок",
@@ -53,6 +55,13 @@ function HomePage() {
   );
 }
 function PortfolioSection() {
+  const cases = Route.useLoaderData();
+
+  /* Кейсов нет — раздела нет. Пустая сетка с заголовком «Что мы уже сделали»
+     выглядит как поломка, а на новом сайте это обычное состояние: владелец
+     ещё не завёл ни одного проекта. */
+  if (cases.length === 0) return null;
+
   return (
     <section className="container-page py-20 sm:py-28">
       <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-12">
@@ -64,7 +73,7 @@ function PortfolioSection() {
           Каждый проект — сайт, бот и админка, собранные под конкретный поток заявок.
         </p>
       </div>
-      <Portfolio />
+      <Portfolio cases={cases} />
       <div className="mt-12 flex justify-center">
         <CtaLink to="/works" variant="ghost">
           Посмотреть все работы
