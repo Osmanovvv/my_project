@@ -41,14 +41,21 @@ function AdminLayout() {
   /* Форма входа рисуется без обвязки: меню и кнопка «Выйти» там ни к чему. */
   if (!auth.authorized) {
     return (
-      <div className="min-h-screen bg-muted/40">
+      <div className="min-h-screen bg-surface">
         <Outlet />
       </div>
     );
   }
 
+  /**
+   * Фон админки — НЕПРОЗРАЧНЫЙ токен, и это важно. Раньше здесь стоял
+   * `bg-muted/40`, и тем же классом красилось окно заявки на телефоне:
+   * сквозь него просвечивал список под окном. Один и тот же непрозрачный
+   * токен на фоне страницы и на окне гарантирует совпадение по построению,
+   * а не на глаз.
+   */
   return (
-    <div className="min-h-screen bg-muted/40">
+    <div className="min-h-screen bg-surface">
       <AdminHeader />
       <main className="mx-auto w-full max-w-5xl px-4 pb-16 pt-6 sm:px-6">
         <Outlet />

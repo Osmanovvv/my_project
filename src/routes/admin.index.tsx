@@ -183,7 +183,7 @@ function LeadsPage() {
               правая колонка, как было. Переключение чистым CSS, без замера
               ширины в JavaScript: иначе при загрузке моргает не та раскладка. */}
           {selected ? (
-            <div className="fixed inset-0 z-50 overflow-y-auto overscroll-contain bg-muted/40 p-3 lg:static lg:z-auto lg:overflow-visible lg:bg-transparent lg:p-0">
+            <div className="fixed inset-0 z-50 overflow-y-auto overscroll-contain bg-surface p-3 lg:static lg:z-auto lg:overflow-visible lg:bg-transparent lg:p-0">
               <div className="lg:sticky lg:top-20">
                 <LeadDetail key={selected.id} lead={selected} onClose={close} />
               </div>
