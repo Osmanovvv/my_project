@@ -46,9 +46,7 @@
               "description": "Идентификатор услуги: websites/landing, websites/corporate, websites/ecommerce, bots/telegram, bots/max, bots/miniapp, support"
             }
           },
-          "required": [
-            "id"
-          ],
+          "required": ["id"],
           "additionalProperties": false,
           "$schema": "http://json-schema.org/draft-07/schema#"
         },

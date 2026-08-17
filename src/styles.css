@@ -82,11 +82,11 @@
   /* Кольцо фокуса. Было 0.35 — поля формы гасят системный контур через
      `focus:outline-none`, и вместо него оставалась почти невидимая полоска:
      с клавиатуры невозможно понять, в каком поле находишься. */
-  --ring: oklch(0.55 0.20 275 / 0.6);
+  --ring: oklch(0.55 0.2 275 / 0.6);
 
   --accent: oklch(0.52 0.22 275);
   --accent-foreground: oklch(0.99 0 0);
-  --accent-soft: oklch(0.52 0.22 275 / 0.10);
+  --accent-soft: oklch(0.52 0.22 275 / 0.1);
   /* Зелёный статуса «онлайн». Единственный цвет вне основной палитры —
      и он такой намеренно: акцент здесь читался бы как ссылка, а не как
      индикатор. Раньше на его месте стоял литерал `bg-emerald-500`, а рядом
@@ -107,7 +107,7 @@
   --destructive: oklch(0.62 0.2 25);
   --destructive-foreground: oklch(0.98 0 0);
 
-  --ink: oklch(0.20 0.02 260);
+  --ink: oklch(0.2 0.02 260);
 
   /* Корпус макетов-устройств в герое.
      Намеренно светлее `--ink`: внутри рамок лежат тёмные скриншоты,
@@ -141,7 +141,10 @@
     text-rendering: optimizeLegibility;
   }
 
-  h1, h2, h3, h4 {
+  h1,
+  h2,
+  h3,
+  h4 {
     font-family: var(--font-display);
     letter-spacing: -0.025em;
     font-weight: 600;
@@ -197,39 +200,81 @@
 }
 
 @keyframes mascot-float {
-  0%, 100% { transform: translateY(0) rotate(-2deg); }
-  50%      { transform: translateY(-6px) rotate(2deg); }
+  0%,
+  100% {
+    transform: translateY(0) rotate(-2deg);
+  }
+  50% {
+    transform: translateY(-6px) rotate(2deg);
+  }
 }
 
 /* Анимации маскота-компаньона и чата. Раньше лежали в инлайновых
    <style> внутри компонентов: React вставлял один и тот же блок в DOM
    на каждый рендер, и найти их поиском по стилям было нельзя. */
 @keyframes mascot-float-sm {
-  0%, 100% { translate: 0 0; }
-  50%      { translate: 0 -4px; }
+  0%,
+  100% {
+    translate: 0 0;
+  }
+  50% {
+    translate: 0 -4px;
+  }
 }
 
 @keyframes mascot-wiggle {
-  0%, 100% { rotate: -6deg; }
-  20%      { rotate: 10deg; }
-  40%      { rotate: -12deg; }
-  60%      { rotate: 8deg; }
-  80%      { rotate: -4deg; }
+  0%,
+  100% {
+    rotate: -6deg;
+  }
+  20% {
+    rotate: 10deg;
+  }
+  40% {
+    rotate: -12deg;
+  }
+  60% {
+    rotate: 8deg;
+  }
+  80% {
+    rotate: -4deg;
+  }
 }
 
 @keyframes mascot-sleep {
-  0%, 100% { translate: 0 0; opacity: 0.95; }
-  50%      { translate: 0 -2px; opacity: 0.8; }
+  0%,
+  100% {
+    translate: 0 0;
+    opacity: 0.95;
+  }
+  50% {
+    translate: 0 -2px;
+    opacity: 0.8;
+  }
 }
 
 @keyframes mascot-pulse {
-  0%, 100% { opacity: 0.55; scale: 1; }
-  50%      { opacity: 1; scale: 1.35; }
+  0%,
+  100% {
+    opacity: 0.55;
+    scale: 1;
+  }
+  50% {
+    opacity: 1;
+    scale: 1.35;
+  }
 }
 
 @keyframes chat-dot {
-  0%, 100% { opacity: 0.3; transform: translateY(0); }
-  50%      { opacity: 1; transform: translateY(-3px); }
+  0%,
+  100% {
+    opacity: 0.3;
+    transform: translateY(0);
+  }
+  50% {
+    opacity: 1;
+    transform: translateY(-3px);
+  }
 }
 
 /* Свечение под маскотом. Раньше было восемь копий `rgba(88,60,240,…)`
@@ -246,8 +291,14 @@
    в чате и подсказках маскота, но в tw-animate-css такой утилиты нет —
    анимация просто не срабатывала. */
 @keyframes scale-in {
-  from { opacity: 0; transform: scale(0.92); }
-  to   { opacity: 1; transform: scale(1); }
+  from {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
 @utility animate-scale-in {
@@ -269,19 +320,44 @@
    ─────────────────────────────────────────────────────────────── */
 
 @keyframes lead-signal {
-  0%, 38%   { opacity: 0; top: 0%; }
-  41%       { opacity: 1; }
-  49%       { opacity: 1; top: 88%; }
-  52%, 100% { opacity: 0; top: 100%; }
+  0%,
+  38% {
+    opacity: 0;
+    top: 0%;
+  }
+  41% {
+    opacity: 1;
+  }
+  49% {
+    opacity: 1;
+    top: 88%;
+  }
+  52%,
+  100% {
+    opacity: 0;
+    top: 100%;
+  }
 }
 
 /* Уведомление «Новая заявка» прилетает в чат, когда сигнал дошёл.
    Сам диалог не прячем: иначе полцикла карточка стоит пустой
    и это читается как поломка, а не как анимация. */
 @keyframes lead-badge {
-  0%, 44%   { opacity: 0; transform: translateY(-5px) scale(0.96); }
-  49%, 88%  { opacity: 1; transform: none; }
-  96%, 100% { opacity: 0; transform: translateY(-5px) scale(0.96); }
+  0%,
+  44% {
+    opacity: 0;
+    transform: translateY(-5px) scale(0.96);
+  }
+  49%,
+  88% {
+    opacity: 1;
+    transform: none;
+  }
+  96%,
+  100% {
+    opacity: 0;
+    transform: translateY(-5px) scale(0.96);
+  }
 }
 
 /* Статус бота в шапке. Две строки лежат в одной ячейке грида и меняются
@@ -289,27 +365,57 @@
    кадре цикла (куда схлопывается `prefers-reduced-motion`) остаётся
    спокойное «бот». */
 @keyframes lead-status {
-  0%, 74%   { opacity: 1; }
-  80%, 92%  { opacity: 0; }
-  97%, 100% { opacity: 1; }
+  0%,
+  74% {
+    opacity: 1;
+  }
+  80%,
+  92% {
+    opacity: 0;
+  }
+  97%,
+  100% {
+    opacity: 1;
+  }
 }
 
 @keyframes lead-typing {
-  0%, 74%   { opacity: 0; }
-  80%, 92%  { opacity: 1; }
-  97%, 100% { opacity: 0; }
+  0%,
+  74% {
+    opacity: 0;
+  }
+  80%,
+  92% {
+    opacity: 1;
+  }
+  97%,
+  100% {
+    opacity: 0;
+  }
 }
 
 /* Счётчик новых заявок в админке: заявка доехала — число щёлкнуло.
    Та же встречная прозрачность, что у статуса бота. */
 @keyframes lead-count-before {
-  0%, 58%   { opacity: 1; }
-  66%, 100% { opacity: 0; }
+  0%,
+  58% {
+    opacity: 1;
+  }
+  66%,
+  100% {
+    opacity: 0;
+  }
 }
 
 @keyframes lead-count-after {
-  0%, 58%   { opacity: 0; }
-  66%, 100% { opacity: 1; }
+  0%,
+  58% {
+    opacity: 0;
+  }
+  66%,
+  100% {
+    opacity: 1;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -322,4 +428,3 @@
     scroll-behavior: auto !important;
   }
 }
-

@@ -2,20 +2,29 @@ import { createFileRoute } from "@tanstack/react-router";
 
 import { normalizeLead, validateLead, type Lead } from "../lib/lead";
 import { formatLeadMessage, readTelegramConfig, sendTelegramMessage } from "../lib/telegram.server";
+import { insertLead, markDelivery } from "../server/leads.server";
 
 /**
- * POST /api/lead — приём заявки с формы и доставка в Telegram.
+ * POST /api/lead — приём заявки: сохранение в базу и доставка в Telegram.
+ *
+ * ПОРЯДОК ВАЖЕН: сначала запись в базу, потом отправка. Раньше единственной
+ * копией заявки был чат Telegram, и при сбое доставки контакт клиента оставался
+ * только в `console.error` — то есть терялся. Теперь база принимает заявку
+ * первой, а Telegram работает уведомлением.
  *
  * Ответы:
- *   200 { ok: true }
+ *   200 { ok: true }                            — заявка принята хотя бы одним каналом
  *   400/413/415 { ok: false, error }            — некорректный запрос
  *   422 { ok: false, error, fields }            — ошибки полей
  *   429 { ok: false, error: "rate_limited" }
- *   502 { ok: false, error: "delivery_failed" } — Telegram недоступен
- *   503 { ok: false, error: "not_configured" }  — не заданы переменные окружения
+ *   502 { ok: false, error: "delivery_failed" } — не сохранилась И не доставилась
  *
- * Любая недоставленная заявка пишется в `console.error`, чтобы её можно было
- * поднять из логов — терять контакт клиента нельзя ни при каком сбое.
+ * ИЗМЕНЕНИЕ ПОВЕДЕНИЯ. Ответы 503 `not_configured` больше нет, а 502 отдаётся
+ * только когда отказали ОБА канала. Если Telegram не настроен или недоступен,
+ * но заявка легла в базу — посетитель видит успех, и это правда: заявку
+ * получили, она ждёт в админке с отметкой о недоставке. Говорить человеку
+ * «не получилось, напишите позже», когда его контакт уже у нас, — вранье,
+ * которое стоит клиента.
  */
 
 const MAX_BODY_BYTES = 20_000;
@@ -103,18 +112,31 @@ async function handleLead({ request }: { request: Request }): Promise<Response> 
     return json({ ok: false, error: "rate_limited" }, 429);
   }
 
+  /* Шаг 1. База. Падение здесь не прерывает обработку: Telegram ещё может
+     доставить заявку, и терять её из-за проблем с диском незачем. */
+  let leadId = 0;
+  try {
+    leadId = insertLead(lead);
+  } catch (error) {
+    logLead("не удалось записать в базу", lead, String(error));
+  }
+
+  /* Шаг 2. Уведомление. */
   const config = readTelegramConfig();
   if (!config) {
     logLead("Telegram не настроен: нет TELEGRAM_BOT_TOKEN или TELEGRAM_CHAT_ID", lead);
-    return json({ ok: false, error: "not_configured" }, 503);
+    if (leadId) markDelivery(leadId, false, "не настроен TELEGRAM_BOT_TOKEN/TELEGRAM_CHAT_ID");
+    return leadId ? json({ ok: true }, 200) : json({ ok: false, error: "delivery_failed" }, 502);
   }
 
   const result = await sendTelegramMessage(config, formatLeadMessage(lead));
   if (!result.ok) {
     logLead("не доставлено в Telegram", lead, result.detail);
-    return json({ ok: false, error: "delivery_failed" }, 502);
+    if (leadId) markDelivery(leadId, false, result.detail ?? "неизвестная ошибка");
+    return leadId ? json({ ok: true }, 200) : json({ ok: false, error: "delivery_failed" }, 502);
   }
 
+  if (leadId) markDelivery(leadId, true);
   return json({ ok: true }, 200);
 }
 
