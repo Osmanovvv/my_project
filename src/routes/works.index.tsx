@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useLoaderData } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { ArrowRight, Filter } from "lucide-react";
 import { PageHero } from "../components/site/PageHero";
@@ -44,14 +44,10 @@ export const Route = createFileRoute("/works/")({
   component: WorksPage,
 });
 
-const stats = [
-  { v: "40+", label: "проектов запущено" },
-  { v: "12", label: "отраслей" },
-  { v: "×2", label: "средний рост заявок" },
-];
-
 function WorksPage() {
   const cases = Route.useLoaderData();
+  const { metrics } = useLoaderData({ from: "__root__" });
+  const stats = metrics.works;
   const [active, setActive] = useState<CaseTag | "Все">("Все");
 
   /* Фильтры строятся по тому, что реально есть в базе: кейс с тегом
@@ -80,10 +76,10 @@ function WorksPage() {
         <div className="mt-2 flex flex-wrap gap-3">
           {stats.map((s) => (
             <div
-              key={s.label}
+              key={s.id}
               className="rounded-2xl border border-border bg-background/70 backdrop-blur px-4 py-3"
             >
-              <div className="font-display text-xl text-accent">{s.v}</div>
+              <div className="font-display text-xl text-accent">{s.value}</div>
               <div className="text-[11px] text-muted-foreground">{s.label}</div>
             </div>
           ))}

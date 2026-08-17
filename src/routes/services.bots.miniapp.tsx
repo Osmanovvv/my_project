@@ -1,10 +1,13 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useLoaderData } from "@tanstack/react-router";
 import { Sparkles, ShoppingBag, User, CreditCard, Layers, Rocket, Palette } from "lucide-react";
 import { ServiceVariationPage } from "../components/site/ServiceVariationPage";
-import { getService } from "../data/services";
+import { SERVICE_BY_ID } from "../data/services";
 import { seo, serviceJsonLd } from "../lib/seo";
 
-const service = getService("bots/miniapp");
+/* Значения по умолчанию — для мета-тегов и микроразметки, которые
+   собираются до отрисовки. Цена и срок на самой странице берутся
+   из снимка контента: они правятся из админки. */
+const service = SERVICE_BY_ID["bots/miniapp"];
 
 export const Route = createFileRoute("/services/bots/miniapp")({
   head: () => {
@@ -22,6 +25,9 @@ export const Route = createFileRoute("/services/bots/miniapp")({
 });
 
 function MiniAppPage() {
+  const { serviceById } = useLoaderData({ from: "__root__" });
+  const live = serviceById["bots/miniapp"];
+
   return (
     <ServiceVariationPage
       eyebrow="Боты · MiniApp"
@@ -33,8 +39,8 @@ function MiniAppPage() {
       description="Полноценное приложение открывается прямо в мессенджере: каталог, корзина, оплата, личный кабинет. Без публикации в сторах."
       icon={Sparkles}
       accent="teal"
-      timeline={service.timeline}
-      priceFrom={service.priceFrom}
+      timeline={live.timeline}
+      priceFrom={live.priceFrom}
       bestFor={["Магазины и маркетплейсы", "Клубы и подписки", "Программы лояльности и билеты"]}
       features={[
         {

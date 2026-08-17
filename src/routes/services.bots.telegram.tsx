@@ -1,10 +1,13 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useLoaderData } from "@tanstack/react-router";
 import { Send, Bell, CreditCard, Users, Bot, Workflow, BarChart3 } from "lucide-react";
 import { ServiceVariationPage } from "../components/site/ServiceVariationPage";
-import { getService } from "../data/services";
+import { SERVICE_BY_ID } from "../data/services";
 import { seo, serviceJsonLd } from "../lib/seo";
 
-const service = getService("bots/telegram");
+/* Значения по умолчанию — для мета-тегов и микроразметки, которые
+   собираются до отрисовки. Цена и срок на самой странице берутся
+   из снимка контента: они правятся из админки. */
+const service = SERVICE_BY_ID["bots/telegram"];
 
 export const Route = createFileRoute("/services/bots/telegram")({
   head: () => {
@@ -22,6 +25,9 @@ export const Route = createFileRoute("/services/bots/telegram")({
 });
 
 function TelegramBotPage() {
+  const { serviceById } = useLoaderData({ from: "__root__" });
+  const live = serviceById["bots/telegram"];
+
   return (
     <ServiceVariationPage
       eyebrow="Боты · Telegram"
@@ -33,8 +39,8 @@ function TelegramBotPage() {
       description="Приём заявок, автоворонки, приём оплат, поддержка пользователей и уведомления менеджерам. Всё внутри одного бота."
       icon={Send}
       accent="teal"
-      timeline={service.timeline}
-      priceFrom={service.priceFrom}
+      timeline={live.timeline}
+      priceFrom={live.priceFrom}
       bestFor={["Услуги с заявками", "Инфопродукты и курсы", "Локальный бизнес и доставки"]}
       features={[
         {

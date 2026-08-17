@@ -154,6 +154,7 @@ export function CaseForm({ initial, submitLabel, onSubmit, publicHref }: Props) 
           <textarea
             value={values.summary}
             onChange={(event) => set("summary", event.target.value)}
+            aria-label="Подводка — что было у клиента до работы"
             rows={3}
             placeholder="Мастерская продавала через личные сообщения: заказы терялись в переписке."
             className="mt-2 w-full resize-none rounded-lg border border-input bg-background px-3 py-2.5 text-sm outline-none transition placeholder:text-muted-foreground/60 focus:ring-2 focus:ring-ring"

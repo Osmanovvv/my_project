@@ -1,10 +1,13 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useLoaderData } from "@tanstack/react-router";
 import { Layout, FileText, Users, Building2, Newspaper, Search, Languages } from "lucide-react";
 import { ServiceVariationPage } from "../components/site/ServiceVariationPage";
-import { getService } from "../data/services";
+import { SERVICE_BY_ID } from "../data/services";
 import { seo, serviceJsonLd } from "../lib/seo";
 
-const service = getService("websites/corporate");
+/* Значения по умолчанию — для мета-тегов и микроразметки, которые
+   собираются до отрисовки. Цена и срок на самой странице берутся
+   из снимка контента: они правятся из админки. */
+const service = SERVICE_BY_ID["websites/corporate"];
 
 export const Route = createFileRoute("/services/websites/corporate")({
   head: () => {
@@ -23,6 +26,9 @@ export const Route = createFileRoute("/services/websites/corporate")({
 });
 
 function CorporatePage() {
+  const { serviceById } = useLoaderData({ from: "__root__" });
+  const live = serviceById["websites/corporate"];
+
   return (
     <ServiceVariationPage
       eyebrow="Сайты · Корпоративный"
@@ -34,8 +40,8 @@ function CorporatePage() {
       description="Многостраничник для компании: услуги, кейсы, команда, блог и вакансии. Управляется без разработчика и растёт в поиске."
       icon={Layout}
       accent="indigo"
-      timeline={service.timeline}
-      priceFrom={service.priceFrom}
+      timeline={live.timeline}
+      priceFrom={live.priceFrom}
       bestFor={["Агентства и студии", "B2B-услуги", "Производство и подрядчики"]}
       features={[
         {

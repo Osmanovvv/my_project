@@ -343,6 +343,152 @@ export const publishCaseEntry = createServerFn({ method: "POST" })
     return { ok: true as const };
   });
 
+// ──────────────────────────────────────────────────── контент сайта ────────
+
+/** Снимок для форм админки: значения, которые сейчас видит посетитель. */
+export const fetchAdminContent = createServerFn({ method: "GET" }).handler(async () => {
+  await assertAuth();
+  const { content } = await import("../server/content.server");
+  return content();
+});
+
+const line = (value: unknown, limit = 300): string =>
+  typeof value === "string" ? value.replace(/\s+/g, " ").trim().slice(0, limit) : "";
+
+export const saveServices = createServerFn({ method: "POST" })
+  .validator((data: { items?: unknown[] }) => ({
+    items: Array.isArray(data?.items) ? data.items : [],
+  }))
+  .handler(async ({ data }) => {
+    await assertAuth();
+    assertSameOrigin();
+    const { saveServiceOverride } = await import("../server/content.server");
+    const { SERVICE_IDS } = await import("../data/services");
+
+    for (const raw of data.items as Array<Record<string, unknown>>) {
+      const id = line(raw.id, 40);
+      if (!(SERVICE_IDS as readonly string[]).includes(id)) continue;
+      saveServiceOverride(id, {
+        priceValue: Math.max(0, Math.round(Number(raw.priceValue) || 0)),
+        timeline: line(raw.timeline, 60),
+        short: line(raw.short, 200),
+        description: line(raw.description, 400),
+      });
+    }
+    return { ok: true as const };
+  });
+
+export const savePackages = createServerFn({ method: "POST" })
+  .validator((data: { items?: unknown[] }) => ({
+    items: Array.isArray(data?.items) ? data.items : [],
+  }))
+  .handler(async ({ data }) => {
+    await assertAuth();
+    assertSameOrigin();
+    const { savePackageOverride } = await import("../server/content.server");
+    const allowed = ["start", "business", "system"];
+
+    for (const raw of data.items as Array<Record<string, unknown>>) {
+      const id = line(raw.id, 20);
+      if (!allowed.includes(id)) continue;
+      savePackageOverride(id, {
+        priceValue: Math.max(0, Math.round(Number(raw.priceValue) || 0)),
+        who: line(raw.who, 200),
+        term: line(raw.term, 60),
+        result: line(raw.result, 200),
+        notFor: line(raw.notFor, 200),
+        points: Array.isArray(raw.points)
+          ? raw.points
+              .map((p) => line(p, 200))
+              .filter(Boolean)
+              .slice(0, 10)
+          : [],
+      });
+    }
+    return { ok: true as const };
+  });
+
+export const saveFaq = createServerFn({ method: "POST" })
+  .validator((data: { items?: unknown[] }) => ({
+    items: Array.isArray(data?.items) ? data.items : [],
+  }))
+  .handler(async ({ data }) => {
+    await assertAuth();
+    assertSameOrigin();
+    const { saveFaqItems } = await import("../server/content.server");
+
+    const items = (data.items as Array<Record<string, unknown>>)
+      .map((raw) => ({
+        q: line(raw.q, 200),
+        a: line(raw.a, 1200),
+        preview: raw.preview === true,
+      }))
+      /* Пустые строки не сохраняем: вопрос без текста попал бы на сайт
+         пустым пунктом аккордеона. */
+      .filter((item) => item.q !== "" && item.a !== "")
+      .slice(0, 40);
+
+    saveFaqItems(items);
+    return { ok: true as const };
+  });
+
+export const saveMetrics = createServerFn({ method: "POST" })
+  .validator((data: { items?: unknown[] }) => ({
+    items: Array.isArray(data?.items) ? data.items : [],
+  }))
+  .handler(async ({ data }) => {
+    await assertAuth();
+    assertSameOrigin();
+    const { saveMetricTiles } = await import("../server/content.server");
+
+    saveMetricTiles(
+      (data.items as Array<Record<string, unknown>>).map((raw) => ({
+        id: line(raw.id, 20),
+        /* Семь знаков — предел плитки: «+40%» и «24/7» помещаются,
+           а длинное значение обрезалось бы на телефоне. */
+        value: line(raw.value, 7),
+        label: line(raw.label, 80),
+      })),
+    );
+    return { ok: true as const };
+  });
+
+export const saveContactChannels = createServerFn({ method: "POST" })
+  .validator((data: { items?: unknown[] }) => ({
+    items: Array.isArray(data?.items) ? data.items : [],
+  }))
+  .handler(async ({ data }) => {
+    await assertAuth();
+    assertSameOrigin();
+    const { saveContacts } = await import("../server/content.server");
+    const allowed = ["telegram", "phone", "email"];
+
+    saveContacts(
+      (data.items as Array<Record<string, unknown>>)
+        .map((raw) => ({ id: line(raw.id, 20), value: line(raw.value, 120) }))
+        .filter((item) => allowed.includes(item.id)),
+    );
+    return { ok: true as const };
+  });
+
+export const saveSiteTexts = createServerFn({ method: "POST" })
+  .validator((data: { items?: unknown[] }) => ({
+    items: Array.isArray(data?.items) ? data.items : [],
+  }))
+  .handler(async ({ data }) => {
+    await assertAuth();
+    assertSameOrigin();
+    const { saveTexts } = await import("../server/content.server");
+
+    saveTexts(
+      (data.items as Array<Record<string, unknown>>).map((raw) => ({
+        key: line(raw.key, 60),
+        value: line(raw.value, 400),
+      })),
+    );
+    return { ok: true as const };
+  });
+
 export const reorderCaseEntries = createServerFn({ method: "POST" })
   .validator((data: { slugs: string[] }) => ({
     slugs: Array.isArray(data?.slugs) ? data.slugs.map(String).slice(0, 200) : [],

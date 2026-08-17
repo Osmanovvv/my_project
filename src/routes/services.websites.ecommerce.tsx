@@ -1,10 +1,13 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useLoaderData } from "@tanstack/react-router";
 import { ShoppingBag, CreditCard, Truck, PackageSearch, Boxes, BarChart3, Tag } from "lucide-react";
 import { ServiceVariationPage } from "../components/site/ServiceVariationPage";
-import { getService } from "../data/services";
+import { SERVICE_BY_ID } from "../data/services";
 import { seo, serviceJsonLd } from "../lib/seo";
 
-const service = getService("websites/ecommerce");
+/* Значения по умолчанию — для мета-тегов и микроразметки, которые
+   собираются до отрисовки. Цена и срок на самой странице берутся
+   из снимка контента: они правятся из админки. */
+const service = SERVICE_BY_ID["websites/ecommerce"];
 
 export const Route = createFileRoute("/services/websites/ecommerce")({
   head: () => {
@@ -23,6 +26,9 @@ export const Route = createFileRoute("/services/websites/ecommerce")({
 });
 
 function EcommercePage() {
+  const { serviceById } = useLoaderData({ from: "__root__" });
+  const live = serviceById["websites/ecommerce"];
+
   return (
     <ServiceVariationPage
       eyebrow="Сайты · E-commerce"
@@ -34,8 +40,8 @@ function EcommercePage() {
       description="Каталог, корзина, оплата, доставка и личный кабинет. Всё связано с CRM, складом и уведомлениями в Telegram."
       icon={ShoppingBag}
       accent="indigo"
-      timeline={service.timeline}
-      priceFrom={service.priceFrom}
+      timeline={live.timeline}
+      priceFrom={live.priceFrom}
       bestFor={[
         "Бренды и производители",
         "Локальные магазины и шоурумы",

@@ -1,10 +1,13 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useLoaderData } from "@tanstack/react-router";
 import { MessageSquare, Sparkles, ShieldCheck, Users, Zap, Bell, Rocket } from "lucide-react";
 import { ServiceVariationPage } from "../components/site/ServiceVariationPage";
-import { getService } from "../data/services";
+import { SERVICE_BY_ID } from "../data/services";
 import { seo, serviceJsonLd } from "../lib/seo";
 
-const service = getService("bots/max");
+/* Значения по умолчанию — для мета-тегов и микроразметки, которые
+   собираются до отрисовки. Цена и срок на самой странице берутся
+   из снимка контента: они правятся из админки. */
+const service = SERVICE_BY_ID["bots/max"];
 
 export const Route = createFileRoute("/services/bots/max")({
   head: () => {
@@ -22,6 +25,9 @@ export const Route = createFileRoute("/services/bots/max")({
 });
 
 function MaxBotPage() {
+  const { serviceById } = useLoaderData({ from: "__root__" });
+  const live = serviceById["bots/max"];
+
   return (
     <ServiceVariationPage
       eyebrow="Боты · MAX"
@@ -33,8 +39,8 @@ function MaxBotPage() {
       description="Новый российский мессенджер, новая аудитория. Переносим бота из Telegram или собираем с нуля — воронки, оплаты, поддержка."
       icon={MessageSquare}
       accent="teal"
-      timeline={service.timeline}
-      priceFrom={service.priceFrom}
+      timeline={live.timeline}
+      priceFrom={live.priceFrom}
       bestFor={[
         "Госсектор и корпоративный сегмент",
         "Бренды, ориентированные на РФ",

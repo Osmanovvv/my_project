@@ -31,6 +31,7 @@ import { Route as MediaFileRouteImport } from './routes/media.$file'
 import { Route as ApiMediaRouteImport } from './routes/api.media'
 import { Route as ApiLeadRouteImport } from './routes/api.lead'
 import { Route as AdminLoginRouteImport } from './routes/admin.login'
+import { Route as AdminContentRouteImport } from './routes/admin.content'
 import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
 import { Route as Char91DotmcpChar93ListToolsRouteImport } from './routes/[.mcp]/list-tools'
 import { Route as ServicesWebsitesIndexRouteImport } from './routes/services.websites.index'
@@ -156,6 +157,11 @@ const AdminLoginRoute = AdminLoginRouteImport.update({
   path: '/login',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminContentRoute = AdminContentRouteImport.update({
+  id: '/content',
+  path: '/content',
+  getParentRoute: () => AdminRoute,
+} as any)
 const Char91DotwellKnownChar93OauthProtectedResourceRoute =
   Char91DotwellKnownChar93OauthProtectedResourceRouteImport.update({
     id: '/.well-known/oauth-protected-resource',
@@ -246,6 +252,7 @@ export interface FileRoutesByFullPath {
   '/works': typeof WorksRouteWithChildren
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
+  '/admin/content': typeof AdminContentRoute
   '/admin/login': typeof AdminLoginRoute
   '/api/lead': typeof ApiLeadRoute
   '/api/media': typeof ApiMediaRoute
@@ -281,6 +288,7 @@ export interface FileRoutesByTo {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
+  '/admin/content': typeof AdminContentRoute
   '/admin/login': typeof AdminLoginRoute
   '/api/lead': typeof ApiLeadRoute
   '/api/media': typeof ApiMediaRoute
@@ -318,6 +326,7 @@ export interface FileRoutesById {
   '/works': typeof WorksRouteWithChildren
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
+  '/admin/content': typeof AdminContentRoute
   '/admin/login': typeof AdminLoginRoute
   '/api/lead': typeof ApiLeadRoute
   '/api/media': typeof ApiMediaRoute
@@ -358,6 +367,7 @@ export interface FileRouteTypes {
     | '/works'
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
+    | '/admin/content'
     | '/admin/login'
     | '/api/lead'
     | '/api/media'
@@ -393,6 +403,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
+    | '/admin/content'
     | '/admin/login'
     | '/api/lead'
     | '/api/media'
@@ -429,6 +440,7 @@ export interface FileRouteTypes {
     | '/works'
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
+    | '/admin/content'
     | '/admin/login'
     | '/api/lead'
     | '/api/media'
@@ -630,6 +642,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminLoginRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/content': {
+      id: '/admin/content'
+      path: '/content'
+      fullPath: '/admin/content'
+      preLoaderRoute: typeof AdminContentRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/.well-known/oauth-protected-resource': {
       id: '/.well-known/oauth-protected-resource'
       path: '/.well-known/oauth-protected-resource'
@@ -732,6 +751,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface AdminRouteChildren {
+  AdminContentRoute: typeof AdminContentRoute
   AdminLoginRoute: typeof AdminLoginRoute
   AdminIndexRoute: typeof AdminIndexRoute
   AdminCasesSlugRoute: typeof AdminCasesSlugRoute
@@ -740,6 +760,7 @@ interface AdminRouteChildren {
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
+  AdminContentRoute: AdminContentRoute,
   AdminLoginRoute: AdminLoginRoute,
   AdminIndexRoute: AdminIndexRoute,
   AdminCasesSlugRoute: AdminCasesSlugRoute,

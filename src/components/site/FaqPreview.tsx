@@ -1,14 +1,13 @@
 import { Link } from "@tanstack/react-router";
 import { useId, useState } from "react";
 import { Plus, Minus } from "lucide-react";
-import { FAQ_PREVIEW } from "../../data/faq";
+import type { FaqItem } from "../../data/faq";
 import { SectionEyebrow } from "./SectionEyebrow";
 
 /* Раньше здесь лежал свой набор из четырёх вопросов с формулировками,
-   отличными от `/faq`. Теперь список общий — расходиться нечему. */
-const items = FAQ_PREVIEW;
-
-export function FaqPreview() {
+   отличными от `/faq`. Теперь список общий — расходиться нечему.
+   Приходит пропом: вопросы правятся из админки и живут в базе. */
+export function FaqPreview({ items }: { items: FaqItem[] }) {
   const [open, setOpen] = useState<number | null>(0);
   const baseId = useId();
   return (

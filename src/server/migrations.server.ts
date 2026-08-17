@@ -145,4 +145,94 @@ export const MIGRATIONS: Migration[] = [
       CREATE INDEX case_order ON case_study (published, position, created_at);
     `,
   },
+
+  {
+    version: 3,
+    name: "Услуги, пакеты, вопросы, цифры, контакты, тексты",
+    up: `
+      -- ── НАКЛАДКИ ─────────────────────────────────────────────────────────
+      -- Устройство отличается от кейсов, и намеренно.
+      --
+      -- Кейсы создаёт владелец, заготовки в коде для них нет. А услуги — это
+      -- страницы сайта: у каждой свой адрес, вёрстка и тексты. Их нельзя
+      -- «добавить из админки», можно только поправить цену или срок.
+      --
+      -- Поэтому в коде остаётся СКЕЛЕТ (какие бывают услуги и пакеты,
+      -- как считается «от 60 000 ₽»), а в базе — только то, что владелец
+      -- реально изменил. Пустая строка в накладке означает «взять из кода».
+      --
+      -- Отсюда главное свойство: пустая или потерянная база НЕ роняет сайт.
+      -- Он отрисуется значениями из кода, как до всей этой затеи.
+
+      CREATE TABLE service_override (
+        id           TEXT PRIMARY KEY,
+        price_value  INTEGER,
+        timeline     TEXT,
+        short        TEXT,
+        description  TEXT,
+        updated_at   INTEGER NOT NULL
+      );
+
+      CREATE TABLE package_override (
+        id          TEXT PRIMARY KEY,
+        price_value INTEGER,
+        who         TEXT,
+        term        TEXT,
+        result      TEXT,
+        not_for     TEXT,
+        points      TEXT CHECK (points IS NULL OR json_valid(points)),
+        updated_at  INTEGER NOT NULL
+      );
+
+      -- ── ВОПРОСЫ ──────────────────────────────────────────────────────────
+      -- Здесь полноценный CRUD: вопросы добавляют и убирают по ходу дела,
+      -- скелета в коде им не нужно.
+      CREATE TABLE faq_item (
+        id         INTEGER PRIMARY KEY AUTOINCREMENT,
+        question   TEXT    NOT NULL,
+        answer     TEXT    NOT NULL,
+        -- Показывать в кратком блоке на главной.
+        preview    INTEGER NOT NULL DEFAULT 0 CHECK (preview IN (0,1)),
+        position   INTEGER NOT NULL DEFAULT 0,
+        updated_at INTEGER NOT NULL
+      );
+      CREATE INDEX faq_order ON faq_item (position);
+
+      -- ── ПЛИТКИ С ЦИФРАМИ ─────────────────────────────────────────────────
+      -- Количество менять нельзя, только значения: вёрстка рассчитана ровно
+      -- на четыре плитки в блоке главной (у последней оставлено место под
+      -- маскота) и три на странице работ. Пятая сломала бы раскладку.
+      CREATE TABLE metric_tile (
+        id         TEXT PRIMARY KEY,
+        -- 'home' — блок на главной, 'works' — плитки над списком работ.
+        area       TEXT    NOT NULL CHECK (area IN ('home','works')),
+        value      TEXT    NOT NULL DEFAULT '',
+        label      TEXT    NOT NULL DEFAULT '',
+        position   INTEGER NOT NULL DEFAULT 0,
+        updated_at INTEGER NOT NULL
+      );
+      CREATE INDEX metric_order ON metric_tile (area, position);
+
+      -- ── КОНТАКТЫ ─────────────────────────────────────────────────────────
+      -- Пустое значение = канала нет нигде: ни на странице контактов,
+      -- ни в подвале, ни в микроразметке. Правило то же, что было в коде.
+      CREATE TABLE contact_channel (
+        id         TEXT PRIMARY KEY CHECK (id IN ('telegram','phone','email')),
+        value      TEXT    NOT NULL DEFAULT '',
+        position   INTEGER NOT NULL DEFAULT 0,
+        updated_at INTEGER NOT NULL
+      );
+
+      -- ── ТЕКСТЫ ───────────────────────────────────────────────────────────
+      -- Переопределения строк по ключу. В коде у каждой строки остаётся
+      -- значение по умолчанию; сюда попадает только то, что владелец изменил.
+      -- Так новый ключ не требует миграции, а забытый в базе — не ломает
+      -- страницу: её текст просто берётся из кода.
+      CREATE TABLE text_override (
+        key        TEXT PRIMARY KEY,
+        value      TEXT NOT NULL,
+        updated_at INTEGER NOT NULL
+      );
+    `,
+  },
 ];

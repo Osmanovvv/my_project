@@ -1,9 +1,9 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useLoaderData } from "@tanstack/react-router";
 import { ArrowRight } from "lucide-react";
 import { Packages } from "../components/site/Packages";
 import { ContactSection } from "../components/site/ContactSection";
 import { PageHero } from "../components/site/PageHero";
-import { CATALOG, type Service } from "../data/services";
+import { CATALOG_ORDER, type Service } from "../data/services";
 import { seo } from "../lib/seo";
 import { SectionEyebrow } from "../components/site/SectionEyebrow";
 import { ServiceCard } from "../components/site/ServiceCard";
@@ -19,6 +19,12 @@ export const Route = createFileRoute("/packages")({
   component: PackagesPage,
 });
 function PackagesPage() {
+  /* Порядок карточек задан кодом, цены — из снимка: они правятся из админки. */
+  const { services } = useLoaderData({ from: "__root__" });
+  const catalog = CATALOG_ORDER.map((id) =>
+    services.find((item: Service) => item.id === id),
+  ).filter((s): s is Service => Boolean(s));
+
   return (
     <>
       <div>
@@ -47,7 +53,7 @@ function PackagesPage() {
           </p>
         </div>
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
-          {CATALOG.map((service) => (
+          {catalog.map((service) => (
             <ServiceCard
               key={service.id}
               service={service}

@@ -59,7 +59,9 @@ export function Section({ id, title, summary, defaultOpen = false, children }: P
 
   return (
     <section className="overflow-hidden rounded-xl border border-border bg-background">
-      <h3>
+      {/* h2, а не h3: секция стоит непосредственно под h1 страницы,
+          и пропуск уровня ломает навигацию по заголовкам. */}
+      <h2>
         <button
           type="button"
           onClick={toggle}
@@ -78,7 +80,7 @@ export function Section({ id, title, summary, defaultOpen = false, children }: P
             <span className="ml-auto truncate text-xs text-muted-foreground">{summary}</span>
           )}
         </button>
-      </h3>
+      </h2>
 
       {/* Содержимое размонтируется, а не прячется стилями: в свёрнутых
           секциях лежат поля ввода, и скрытые они всё равно ловили бы

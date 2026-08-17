@@ -1,7 +1,10 @@
 import { Link } from "@tanstack/react-router";
-import { PACKAGES } from "../../data/services";
+import { useLoaderData } from "@tanstack/react-router";
 
 export function Packages({ extended = false }: { extended?: boolean }) {
+  /* Тарифы приходят из снимка контента: цены правятся из админки. */
+  const { packages } = useLoaderData({ from: "__root__" });
+
   return (
     // Три колонки только с lg. На md (768) карточка получала ~160px под
     // содержимое, и цена `text-3xl` вида «от 180 000 ₽» не влезала — её
@@ -9,7 +12,7 @@ export function Packages({ extended = false }: { extended?: boolean }) {
     // min-width по умолчанию `auto`, поэтому длинное слово внутри распирало
     // колонку и уводило страницу в горизонтальный скролл.
     <div className="grid gap-6 lg:grid-cols-3 lg:items-stretch">
-      {PACKAGES.map((p) => {
+      {packages.map((p) => {
         const featured = p.featured;
         return (
           <div
@@ -82,10 +85,14 @@ export function Packages({ extended = false }: { extended?: boolean }) {
 function Row({ k, v, featured }: { k: string; v: string; featured?: boolean }) {
   return (
     <div className="flex gap-3">
+      {/* Было `text-white/40` — контраст 3.81 на тёмной карточке при норме
+          4.5 для мелкого текста. Подписи «Срок», «Результат», «Не подойдёт»
+          набраны прописными в 12 пикселей, то есть читаются тяжелее обычного,
+          и выцветать им нельзя. */}
       <dt
         className={
           "w-28 shrink-0 text-xs uppercase tracking-wider " +
-          (featured ? "text-white/40" : "text-muted-foreground")
+          (featured ? "text-white/65" : "text-muted-foreground")
         }
       >
         {k}

@@ -16,7 +16,8 @@ import { SiteHeader } from "../components/site/SiteHeader";
 import { SiteFooter } from "../components/site/SiteFooter";
 import { MascotCompanion } from "../components/site/MascotCompanion";
 import { Toaster } from "../components/ui/sonner";
-import { CONTACT_CHANNELS, ORGANIZATION } from "../data/contacts";
+import { ORGANIZATION } from "../data/contacts";
+import { fetchSiteContent } from "../lib/content.rpc";
 import { absoluteUrl, jsonLd, seo, SITE_NAME } from "../lib/seo";
 
 function NotFoundComponent() {
@@ -87,7 +88,18 @@ const rootSeo = seo({
 });
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
-  head: () => ({
+  /**
+   * Редактируемый контент грузится в корне, а не в каждой странице отдельно.
+   *
+   * Причина простая: цены, вопросы и тексты нужны почти везде, и пятнадцать
+   * одинаковых загрузчиков — это пятнадцать мест, где можно забыть про новую
+   * страницу. Здесь же снимок берётся один раз за переход, а на сервере
+   * он ещё и кеширован по версии контента.
+   *
+   * Страницы читают его через `useRouteContext({ from: "__root__" })`.
+   */
+  loader: () => fetchSiteContent(),
+  head: ({ loaderData }) => ({
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
@@ -105,8 +117,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         areaServed: ORGANIZATION.areaServed,
         /* `sameAs` появляется только когда есть что показать. Пустой массив
            в разметке — сигнал поисковику «каналов нет», а не «пока не знаем». */
-        ...(CONTACT_CHANNELS.length > 0
-          ? { sameAs: CONTACT_CHANNELS.map((channel) => channel.href) }
+        ...(loaderData && loaderData.contacts.length > 0
+          ? { sameAs: loaderData.contacts.map((channel) => channel.href) }
           : {}),
       }),
       jsonLd({

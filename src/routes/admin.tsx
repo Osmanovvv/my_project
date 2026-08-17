@@ -1,5 +1,5 @@
 import { createFileRoute, redirect, Link, Outlet, useRouter } from "@tanstack/react-router";
-import { FolderOpen, Inbox, LogOut } from "lucide-react";
+import { FolderOpen, Inbox, LogOut, SlidersHorizontal } from "lucide-react";
 
 import { getAuthState, submitLogout } from "../lib/admin.rpc";
 
@@ -38,12 +38,14 @@ export const Route = createFileRoute("/admin")({
 function AdminLayout() {
   const { auth } = Route.useRouteContext();
 
-  /* Форма входа рисуется без обвязки: меню и кнопка «Выйти» там ни к чему. */
+  /* Форма входа рисуется без обвязки: меню и кнопка «Выйти» там ни к чему.
+     Но `<main>` нужен и здесь — без него скринридер не может перейти
+     к основному содержимому, и Lighthouse справедливо снижает оценку. */
   if (!auth.authorized) {
     return (
-      <div className="min-h-screen bg-surface">
+      <main className="min-h-screen bg-surface">
         <Outlet />
-      </div>
+      </main>
     );
   }
 
@@ -81,7 +83,7 @@ function AdminHeader() {
       <div className="mx-auto flex w-full max-w-5xl items-center gap-2 px-4 py-3 sm:gap-4 sm:px-6">
         <Link
           to="/admin"
-          className="whitespace-nowrap font-display text-sm font-semibold tracking-tight"
+          className="-my-1 whitespace-nowrap rounded-lg py-2 font-display text-sm font-semibold tracking-tight transition hover:text-accent"
         >
           IT<span className="text-muted-foreground">—</span>Agent
           <span className="ml-2 hidden text-xs font-normal text-muted-foreground sm:inline">
@@ -104,6 +106,13 @@ function AdminHeader() {
           >
             <FolderOpen className="h-4 w-4" />
             Кейсы
+          </Link>
+          <Link
+            to="/admin/content"
+            className="inline-flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-sm text-muted-foreground transition hover:bg-muted hover:text-foreground sm:px-3 [&.active]:bg-accent-soft [&.active]:text-accent"
+          >
+            <SlidersHorizontal className="h-4 w-4" />
+            <span className="hidden sm:inline">Контент</span>
           </Link>
         </nav>
 

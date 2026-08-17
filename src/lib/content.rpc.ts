@@ -15,8 +15,25 @@
 import { createServerFn } from "@tanstack/react-start";
 
 import type { CaseStudy } from "../data/cases";
+import type { ContentSnapshot } from "../server/content.server";
 
-export type { CaseStudy };
+export type { CaseStudy, ContentSnapshot };
+
+/**
+ * Весь редактируемый контент одним запросом: услуги, пакеты, вопросы,
+ * цифры, контакты, тексты.
+ *
+ * Одним, а не по кусочкам, намеренно. Страницы показывают всё вперемешку —
+ * главная и цены, и вопросы, и плитки, — и раздельные запросы дали бы пять
+ * походов на сервер при каждом переходе. На сервере снимок к тому же
+ * кешируется по версии контента, так что цена этого вызова — почти ноль.
+ */
+export const fetchSiteContent = createServerFn({ method: "GET" }).handler(
+  async (): Promise<ContentSnapshot> => {
+    const { content } = await import("../server/content.server");
+    return content();
+  },
+);
 
 /** Опубликованные кейсы в порядке сетки. */
 export const fetchCases = createServerFn({ method: "GET" }).handler(

@@ -1,10 +1,13 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useLoaderData } from "@tanstack/react-router";
 import { Zap, Target, Rocket, Gauge, Search, Palette, Puzzle } from "lucide-react";
 import { ServiceVariationPage } from "../components/site/ServiceVariationPage";
-import { getService } from "../data/services";
+import { SERVICE_BY_ID } from "../data/services";
 import { seo, serviceJsonLd } from "../lib/seo";
 
-const service = getService("websites/landing");
+/* Значения по умолчанию — для мета-тегов и микроразметки, которые
+   собираются до отрисовки. Цена и срок на самой странице берутся
+   из снимка контента: они правятся из админки. */
+const service = SERVICE_BY_ID["websites/landing"];
 
 export const Route = createFileRoute("/services/websites/landing")({
   head: () => {
@@ -22,6 +25,9 @@ export const Route = createFileRoute("/services/websites/landing")({
 });
 
 function LandingPage() {
+  const { serviceById } = useLoaderData({ from: "__root__" });
+  const live = serviceById["websites/landing"];
+
   return (
     <ServiceVariationPage
       eyebrow="Сайты · Лендинг"
@@ -33,8 +39,8 @@ function LandingPage() {
       description="Одностраничный сайт под запуск продукта, услугу или рекламную кампанию. Быстро, красиво и с формой, из которой заявки не теряются."
       icon={Zap}
       accent="indigo"
-      timeline={service.timeline}
-      priceFrom={service.priceFrom}
+      timeline={live.timeline}
+      priceFrom={live.priceFrom}
       bestFor={[
         "Запуск услуги или продукта",
         "Реклама Яндекс / Telegram Ads",

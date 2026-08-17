@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useLoaderData } from "@tanstack/react-router";
 import { useState } from "react";
 import {
   ArrowRight,
@@ -11,7 +11,8 @@ import {
   LifeBuoy,
   type LucideIcon,
 } from "lucide-react";
-import { CATALOG, type ServiceId } from "../data/services";
+import { CATALOG_ORDER, type ServiceId } from "../data/services";
+import { AccentText } from "../components/site/AccentText";
 import { fetchCases } from "../lib/content.rpc";
 import { seo } from "../lib/seo";
 import { ContactSection } from "../components/site/ContactSection";
@@ -56,6 +57,7 @@ function HomePage() {
 }
 function PortfolioSection() {
   const cases = Route.useLoaderData();
+  const { texts } = useLoaderData({ from: "__root__" });
 
   /* Кейсов нет — раздела нет. Пустая сетка с заголовком «Что мы уже сделали»
      выглядит как поломка, а на новом сайте это обычное состояние: владелец
@@ -66,12 +68,12 @@ function PortfolioSection() {
     <section className="container-page py-20 sm:py-28">
       <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-12">
         <div>
-          <SectionEyebrow>Работы</SectionEyebrow>
-          <h2 className="mt-3 text-3xl sm:text-4xl font-display max-w-xl">Что мы уже сделали</h2>
+          <SectionEyebrow>{texts["home.works.eyebrow"]}</SectionEyebrow>
+          <h2 className="mt-3 text-3xl sm:text-4xl font-display max-w-xl">
+            <AccentText text={texts["home.works.title"]} />
+          </h2>
         </div>
-        <p className="text-muted-foreground max-w-sm text-sm">
-          Каждый проект — сайт, бот и админка, собранные под конкретный поток заявок.
-        </p>
+        <p className="text-muted-foreground max-w-sm text-sm">{texts["home.works.note"]}</p>
       </div>
       <Portfolio cases={cases} />
       <div className="mt-12 flex justify-center">
@@ -84,10 +86,12 @@ function PortfolioSection() {
   );
 }
 function ProcessSection() {
+  const { texts } = useLoaderData({ from: "__root__" });
+
   return (
     <section className="container-page py-20 sm:py-28 border-t border-border">
       <div className="mb-14">
-        <SectionEyebrow>Как работаем</SectionEyebrow>
+        <SectionEyebrow>{texts["home.process.eyebrow"]}</SectionEyebrow>
         <h2 className="mt-3 text-3xl sm:text-4xl font-display max-w-xl">
           Четыре шага без сюрпризов
         </h2>
@@ -104,14 +108,23 @@ function MetricsSection() {
   );
 }
 function FaqSection() {
+  const { faq } = useLoaderData({ from: "__root__" });
+  const preview = faq.filter((item) => item.preview);
+
+  /* Ни одного вопроса не помечено для главной — блок не рисуем.
+     Заголовок «Отвечаем заранее» без единого вопроса выглядит как поломка. */
+  if (preview.length === 0) return null;
+
   return (
     <section className="container-page py-20 sm:py-28 border-t border-border">
-      <FaqPreview />
+      <FaqPreview items={preview} />
     </section>
   );
 }
 /* ------------------------------- HERO ------------------------------- */
 function Hero() {
+  const { texts } = useLoaderData({ from: "__root__" });
+
   // Нижний паддинг больше верхнего: при `items-center` это поднимает
   // весь блок выше середины экрана, не ломая центрирование.
   return (
@@ -136,21 +149,23 @@ function Hero() {
           <div className="flex flex-col items-center lg:items-start text-center lg:text-left">
             <span className="inline-flex items-center gap-2 px-3.5 py-1.5 mb-6 sm:mb-8 text-[11px] font-semibold tracking-[0.18em] uppercase bg-accent-soft text-accent rounded-full">
               <span className="h-1.5 w-1.5 rounded-full bg-accent" />
-              Сайт · Telegram-бот · Админка
+              {texts["home.hero.eyebrow"]}
             </span>
+            {/* Выделение цветом задаётся звёздочками в тексте, а не разметкой
+                из базы: HTML оттуда пришлось бы вставлять небезопасно. */}
             <h1 className="font-display text-4xl sm:text-5xl lg:text-6xl leading-[1.05] tracking-tight max-w-xl">
-              Сайт, который <span className="text-accent">не теряет заявки</span>
+              <AccentText text={texts["home.hero.title"]} />
             </h1>
             <p className="mt-5 sm:mt-7 text-base sm:text-lg text-muted-foreground max-w-xl leading-relaxed">
-              Единая система: сайт, бот в Telegram и админка работают вместе.
+              {texts["home.hero.subtitle"]}
             </p>
             <div className="mt-8 sm:mt-10 flex flex-col sm:flex-row gap-3">
               <CtaLink to="/contacts" cheer>
-                Получить разбор
+                {texts["home.hero.primaryCta"]}
                 <ArrowRight className="h-4 w-4" />
               </CtaLink>
               <CtaLink to="/services" variant="secondary">
-                Как это работает
+                {texts["home.hero.secondaryCta"]}
               </CtaLink>
             </div>
 
@@ -251,13 +266,19 @@ const SERVICE_ICONS: Record<ServiceId, LucideIcon> = {
 };
 
 function PackagesSection() {
+  const { texts, services } = useLoaderData({ from: "__root__" });
   const [tab, setTab] = useState<"packages" | "single">("packages");
+
+  /* Порядок карточек задан кодом, значения — из базы. */
+  const catalog = CATALOG_ORDER.map((id) => services.find((s) => s.id === id)!).filter(Boolean);
 
   return (
     <section className="container-page py-20 sm:py-28">
       <div className="text-center mb-8 sm:mb-10">
-        <SectionEyebrow>Пакеты и услуги</SectionEyebrow>
-        <h2 className="mt-3 text-3xl sm:text-4xl font-display">С чего начать</h2>
+        <SectionEyebrow>{texts["home.packages.eyebrow"]}</SectionEyebrow>
+        <h2 className="mt-3 text-3xl sm:text-4xl font-display">
+          <AccentText text={texts["home.packages.title"]} />
+        </h2>
         <p className="mt-3 text-muted-foreground">
           Готовый пакет — или только одна услуга, если нужно точечно.
         </p>
@@ -310,7 +331,7 @@ function PackagesSection() {
       ) : (
         <>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {CATALOG.map((service) => (
+            {catalog.map((service) => (
               <ServiceCard key={service.id} service={service} icon={SERVICE_ICONS[service.id]} />
             ))}
           </div>

@@ -1,8 +1,8 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useLoaderData } from "@tanstack/react-router";
 import { Mail, Phone, Send, type LucideIcon } from "lucide-react";
 import { ContactSection } from "../components/site/ContactSection";
 import { PageHero } from "../components/site/PageHero";
-import { CONTACT_CHANNELS, ORGANIZATION, type ContactChannel } from "../data/contacts";
+import { ORGANIZATION, type ContactChannel } from "../data/contacts";
 import { absoluteUrl, jsonLd, seo } from "../lib/seo";
 
 export const Route = createFileRoute("/contacts")({
@@ -39,6 +39,8 @@ const ICONS: Record<ContactChannel["id"], LucideIcon> = {
 };
 
 function ContactsPage() {
+  const { contacts } = useLoaderData({ from: "__root__" });
+
   return (
     <>
       <PageHero
@@ -54,10 +56,10 @@ function ContactsPage() {
       {/* Пока каналов нет, сетку не рисуем: пустой ряд карточек читается как
           поломка вёрстки. Появится первый контакт в `CONTACT_CHANNELS` —
           блок вернётся сам, править здесь ничего не нужно. */}
-      {CONTACT_CHANNELS.length > 0 && (
+      {contacts.length > 0 && (
         <section className="container-page pt-8 pb-4">
           <div className="grid sm:grid-cols-3 gap-4">
-            {CONTACT_CHANNELS.map((channel) => {
+            {contacts.map((channel: ContactChannel) => {
               const Icon = ICONS[channel.id];
               const external = channel.href.startsWith("http");
               return (

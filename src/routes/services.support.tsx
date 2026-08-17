@@ -11,12 +11,15 @@ import {
   Check,
 } from "lucide-react";
 import { ServiceDetailLayout } from "../components/site/ServiceDetailLayout";
-import { formatPrice, getService } from "../data/services";
+import { formatPrice, SERVICE_BY_ID } from "../data/services";
 import { seo, serviceJsonLd } from "../lib/seo";
 import { SectionEyebrow } from "../components/site/SectionEyebrow";
 import { CheckMark } from "../components/site/CheckMark";
 
-const service = getService("support");
+/* Значения по умолчанию — для мета-тегов и микроразметки, которые
+   собираются до отрисовки. Цена и срок на самой странице берутся
+   из снимка контента: они правятся из админки. */
+const service = SERVICE_BY_ID["support"];
 
 export const Route = createFileRoute("/services/support")({
   head: () => {
@@ -70,7 +73,7 @@ const plans = [
   {
     name: "Базовый",
     /* Стартовая цена направления — из каталога, чтобы не разъезжалась с карточками. */
-    price: getService("support").priceFrom,
+    price: SERVICE_BY_ID["support"].priceFrom,
     features: ["Мониторинг 24/7", "Бэкапы", "До 3 часов правок", "Отчёт раз в месяц"],
     highlight: false,
   },

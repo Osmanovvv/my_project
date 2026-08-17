@@ -160,6 +160,9 @@ export function CoverField({
         ref={inputRef}
         type="file"
         accept="image/*"
+        /* Поле спрятано визуально, но остаётся в дереве доступности:
+           без подписи скринридер объявит его безымянным. */
+        aria-label="Файл обложки"
         className="sr-only"
         onChange={(event) => {
           const file = event.target.files?.[0];
@@ -230,7 +233,7 @@ export function CoverField({
                   <button
                     type="button"
                     onClick={() => inputRef.current?.click()}
-                    className="font-medium text-accent underline underline-offset-4"
+                    className="-my-1 rounded px-1 py-2 font-medium text-accent underline underline-offset-4"
                   >
                     выберите файл
                   </button>

@@ -118,9 +118,9 @@ export const CATEGORIES: ServiceCategory[] = [
   },
 ];
 
-type ServiceSeed = Omit<Service, "priceFrom">;
+export type ServiceSeed = Omit<Service, "priceFrom">;
 
-const SERVICE_SEEDS: ServiceSeed[] = [
+export const SERVICE_SEEDS: ServiceSeed[] = [
   {
     id: "websites/landing",
     category: "websites",
@@ -239,9 +239,9 @@ export function servicesOf(category: ServiceCategoryId): Service[] {
   return SERVICES.filter((service) => service.category === category);
 }
 
-type PackageSeed = Omit<Package, "priceFrom">;
+export type PackageSeed = Omit<Package, "priceFrom">;
 
-const PACKAGE_SEEDS: PackageSeed[] = [
+export const PACKAGE_SEEDS: PackageSeed[] = [
   {
     id: "start",
     name: "Старт",

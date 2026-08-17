@@ -1,14 +1,16 @@
 import { Mascot } from "./Mascot";
 import { SectionEyebrow } from "./SectionEyebrow";
 
-const metrics = [
-  { v: "+40%", label: "заявок в среднем за первый месяц" },
-  { v: "<2 нед", label: "до запуска простого проекта" },
-  { v: "100%", label: "заявок в одном месте со статусом" },
-  { v: "24/7", label: "приём заявок без участия менеджера" },
-];
+import { useLoaderData } from "@tanstack/react-router";
 
+/**
+ * Количество плиток задано вёрсткой и из админки не меняется: четыре
+ * встают в ряд, у последней оставлено место под маскота, на телефоне они
+ * идут в две колонки. Пятая сломала бы и то и другое. Правятся значения
+ * и подписи.
+ */
 export function Metrics() {
+  const { metrics, texts } = useLoaderData({ from: "__root__" });
   return (
     <div className="relative rounded-4xl border border-border bg-surface p-6 sm:p-10 overflow-hidden">
       {/* ambient glow */}
@@ -24,17 +26,17 @@ export function Metrics() {
 
       <div className="relative flex items-end justify-between mb-8 gap-4">
         <div>
-          <SectionEyebrow>Цифры</SectionEyebrow>
+          <SectionEyebrow>{texts["home.metrics.eyebrow"]}</SectionEyebrow>
           <h3 className="mt-2 font-display text-2xl sm:text-3xl max-w-md">
-            Что меняется после запуска
+            {texts["home.metrics.title"]}
           </h3>
         </div>
       </div>
 
       <div className="relative grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
-        {metrics.map((m, i) => (
+        {metrics.home.map((m, i) => (
           <div
-            key={m.label}
+            key={m.id}
             className="group relative min-w-0 rounded-2xl bg-background border border-border p-5 sm:p-6 last:sm:pr-24 hover:border-accent/40 transition-all"
           >
             <div className="absolute inset-x-5 top-0 h-px bg-gradient-to-r from-transparent via-accent/50 to-transparent opacity-0 group-hover:opacity-100 transition" />
@@ -54,7 +56,7 @@ export function Metrics() {
                 color: "transparent",
               }}
             >
-              {m.v}
+              {m.value}
             </div>
             <div className="mt-4 text-xs sm:text-sm text-muted-foreground leading-snug">
               {m.label}
