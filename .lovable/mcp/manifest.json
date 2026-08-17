@@ -1,0 +1,75 @@
+{
+  "version": 1,
+  "sdk_version": "0.23.0",
+  "path": "/mcp",
+  "auth": {
+    "type": "none"
+  },
+  "mcp": {
+    "server": {
+      "name": "it-agent-mcp",
+      "version": "0.1.0",
+      "title": "IT-Agent MCP"
+    },
+    "tools": [
+      {
+        "name": "list_services",
+        "title": "Список услуг",
+        "description": "Возвращает каталог услуг агентства: сайты, боты/MiniApp и поддержка, с ссылками на страницы.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {}
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "get_service",
+        "title": "Детали услуги",
+        "description": "Возвращает подробности услуги по идентификатору (например websites/landing, bots/telegram, support).",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Идентификатор услуги: websites/landing, websites/corporate, websites/ecommerce, bots/telegram, bots/max, bots/miniapp, support"
+            }
+          },
+          "required": [
+            "id"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "get_contacts",
+        "title": "Контакты",
+        "description": "Возвращает публичные контакты и ссылки для связи с агентством.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {}
+        },
+        "outputSchema": null
+      }
+    ]
+  }
+}

@@ -1,0 +1,325 @@
+@import "tailwindcss" source(none);
+@source "../src";
+@import "tw-animate-css";
+/* Только те начертания, что реально встречаются в разметке.
+   Было восемь: Outfit 300/400/500/600/700 и Inter 400/500/600 — то есть
+   больше десятка файлов на загрузку. Проверено поиском по проекту:
+   `font-light` (300) не используется ни разу, Outfit 700 — тоже
+   (единственный `font-bold` стоит на тексте Inter). */
+@import "@fontsource/outfit/400.css";
+@import "@fontsource/outfit/500.css";
+@import "@fontsource/outfit/600.css";
+@import "@fontsource/inter/400.css";
+@import "@fontsource/inter/500.css";
+@import "@fontsource/inter/600.css";
+@import "@fontsource/inter/700.css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+  /* 3xl и 4xl раньше брались из дефолтов Tailwind (24px и произвольный
+     `rounded-[2rem]`), то есть жили мимо шкалы: смена `--radius` их бы не
+     задела, и скругления разъехались бы. Значения подобраны так, чтобы
+     совпасть с прежними до пикселя. */
+  --radius-3xl: calc(var(--radius) + 10px);
+  --radius-4xl: calc(var(--radius) + 18px);
+
+  --font-display: "Outfit", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-surface: var(--surface);
+  --color-surface-elevated: var(--surface-elevated);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent-soft: var(--accent-soft);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-status-online: var(--status-online);
+  --color-ink: var(--ink);
+  --color-frame: var(--frame);
+  --color-frame-edge: var(--frame-edge);
+  --color-frame-muted: var(--frame-muted);
+  --color-tg-screen: var(--tg-screen);
+  --color-tg-bubble: var(--tg-bubble);
+  --color-tg-accent: var(--tg-accent);
+}
+
+:root {
+  --radius: 0.875rem;
+
+  /* Sophisticated minimalist — white + slate + indigo accent + graphite ink */
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.22 0.03 260);
+
+  --surface: oklch(0.985 0.005 250);
+  --surface-elevated: oklch(1 0 0);
+
+  --muted: oklch(0.965 0.008 250);
+  --muted-foreground: oklch(0.55 0.02 260);
+
+  --border: oklch(0.92 0.01 250);
+  --input: oklch(0.92 0.01 250);
+  /* Кольцо фокуса. Было 0.35 — поля формы гасят системный контур через
+     `focus:outline-none`, и вместо него оставалась почти невидимая полоска:
+     с клавиатуры невозможно понять, в каком поле находишься. */
+  --ring: oklch(0.55 0.20 275 / 0.6);
+
+  --accent: oklch(0.52 0.22 275);
+  --accent-foreground: oklch(0.99 0 0);
+  --accent-soft: oklch(0.52 0.22 275 / 0.10);
+  /* Зелёный статуса «онлайн». Единственный цвет вне основной палитры —
+     и он такой намеренно: акцент здесь читался бы как ссылка, а не как
+     индикатор. Раньше на его месте стоял литерал `bg-emerald-500`, а рядом
+     висел токен `--signal`, полный дубликат `--accent`, которым никто
+     не пользовался. */
+  --status-online: oklch(0.72 0.17 155);
+
+  --primary: oklch(0.22 0.03 260);
+  --primary-foreground: oklch(0.99 0 0);
+  --secondary: oklch(0.965 0.008 250);
+  --secondary-foreground: oklch(0.22 0.03 260);
+
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.22 0.03 260);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.22 0.03 260);
+
+  --destructive: oklch(0.62 0.2 25);
+  --destructive-foreground: oklch(0.98 0 0);
+
+  --ink: oklch(0.20 0.02 260);
+
+  /* Корпус макетов-устройств в герое.
+     Намеренно светлее `--ink`: внутри рамок лежат тёмные скриншоты,
+     и с чистым графитом они бы слипались в одно пятно. `frame-edge` —
+     светлые волосяные линии, которые отделяют корпус от содержимого. */
+  --frame: oklch(0.32 0.018 265);
+  --frame-edge: oklch(1 0 0 / 0.24);
+  --frame-muted: oklch(1 0 0 / 0.6);
+
+  /* Экран переписки внутри макета бота — палитра тёмной темы Telegram.
+     Фон переписки заметно темнее корпуса (`--frame`), иначе окно и
+     содержимое читаются одним прямоугольником. Исходящие сообщения
+     берут акцент сайта: в дефолтной тёмной теме Telegram они как раз
+     фиолетовые, так что реализм и бренд тут не спорят. */
+  --tg-screen: oklch(0.19 0.022 258);
+  --tg-bubble: oklch(0.28 0.018 258);
+  --tg-accent: oklch(0.74 0.13 275);
+}
+
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
+
+  html,
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  h1, h2, h3, h4 {
+    font-family: var(--font-display);
+    letter-spacing: -0.025em;
+    font-weight: 600;
+  }
+
+  ::selection {
+    background: var(--accent-soft);
+    color: var(--foreground);
+  }
+}
+
+/* Ширина контента. Вертикальный ритм задаётся классами на самой секции,
+   и шкала у него ровно такая — держитесь её, иначе разнобой вернётся:
+
+     py-16 sm:py-24   обычная секция контента (15 из 20 на сайте)
+     py-20 sm:py-28   секции главной — она флагман, воздуха чуть больше
+     py-24 sm:py-32   финальный блок с формой: самый крупный, закрывает страницу
+     py-12 sm:py-16   узкая полоса с цифрами — намеренно теснее соседей
+
+   Было шесть произвольных значений, и половина секций вообще не имела
+   адаптивного шага: на широком экране страницы услуг выглядели зажатыми
+   рядом с главной. */
+@utility container-page {
+  width: 100%;
+  max-width: 1200px;
+  margin-inline: auto;
+  padding-inline: 1.5rem;
+}
+
+/* Подъём карточки под курсором.
+   Было четыре рецепта на семь одинаковых по смыслу карточек: две
+   произвольные тени (`0 20px 60px -30px` и `0 30px 80px -40px`) и два
+   набора из шкалы Tailwind (`shadow-xl/accent-5`, `shadow-2xl/accent-10`).
+   Поодиночке разницу не поймать, но клиент водит мышкой по нескольким
+   карточкам подряд — и она читается как небрежность.
+
+   Имя намеренно вне пространства `shadow-*`: Tailwind разбирает `shadow-…`
+   как обращение к своей шкале теней, и утилита с таким именем молча
+   не компилируется — класс в разметке есть, правила в CSS нет. */
+@utility card-lift {
+  box-shadow: 0 20px 60px -30px var(--accent);
+}
+
+@utility hairline {
+  background: linear-gradient(
+    to right,
+    transparent,
+    var(--color-border) 20%,
+    var(--color-border) 80%,
+    transparent
+  );
+  height: 1px;
+}
+
+@keyframes mascot-float {
+  0%, 100% { transform: translateY(0) rotate(-2deg); }
+  50%      { transform: translateY(-6px) rotate(2deg); }
+}
+
+/* Анимации маскота-компаньона и чата. Раньше лежали в инлайновых
+   <style> внутри компонентов: React вставлял один и тот же блок в DOM
+   на каждый рендер, и найти их поиском по стилям было нельзя. */
+@keyframes mascot-float-sm {
+  0%, 100% { translate: 0 0; }
+  50%      { translate: 0 -4px; }
+}
+
+@keyframes mascot-wiggle {
+  0%, 100% { rotate: -6deg; }
+  20%      { rotate: 10deg; }
+  40%      { rotate: -12deg; }
+  60%      { rotate: 8deg; }
+  80%      { rotate: -4deg; }
+}
+
+@keyframes mascot-sleep {
+  0%, 100% { translate: 0 0; opacity: 0.95; }
+  50%      { translate: 0 -2px; opacity: 0.8; }
+}
+
+@keyframes mascot-pulse {
+  0%, 100% { opacity: 0.55; scale: 1; }
+  50%      { opacity: 1; scale: 1.35; }
+}
+
+@keyframes chat-dot {
+  0%, 100% { opacity: 0.3; transform: translateY(0); }
+  50%      { opacity: 1; transform: translateY(-3px); }
+}
+
+/* Свечение под маскотом. Раньше было восемь копий `rgba(88,60,240,…)`
+   по файлам — не переживало смену акцентного цвета. */
+@utility mascot-glow {
+  filter: drop-shadow(0 8px 40px color-mix(in oklab, var(--accent) 40%, transparent));
+}
+
+@utility mascot-glow-sm {
+  filter: drop-shadow(0 6px 16px color-mix(in oklab, var(--accent) 45%, transparent));
+}
+
+/* Появление всплывающих панелей. Класс `animate-scale-in` использовался
+   в чате и подсказках маскота, но в tw-animate-css такой утилиты нет —
+   анимация просто не срабатывала. */
+@keyframes scale-in {
+  from { opacity: 0; transform: scale(0.92); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+@utility animate-scale-in {
+  animation: scale-in 220ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* ───────────────────────────────────────────────────────────────
+   Сцена «заявка проходит систему» в макетах героя.
+
+   Все элементы крутят один и тот же 8-секундный цикл, а момент
+   своего появления кодируют процентами внутри кейфреймов — так
+   шаги не разъезжаются и не нужны отдельные задержки.
+
+   Порядок: сигнал уходит с сайта вниз → к боту прилетает
+   «Новая заявка» → счётчик в админке перещёлкивается с 2 на 3 →
+   бот переключается в «печатает…». Диалог в чате не прячем, поэтому
+   при `prefers-reduced-motion` (анимации схлопываются в 0.01ms)
+   сцена просто показывает итог.
+   ─────────────────────────────────────────────────────────────── */
+
+@keyframes lead-signal {
+  0%, 38%   { opacity: 0; top: 0%; }
+  41%       { opacity: 1; }
+  49%       { opacity: 1; top: 88%; }
+  52%, 100% { opacity: 0; top: 100%; }
+}
+
+/* Уведомление «Новая заявка» прилетает в чат, когда сигнал дошёл.
+   Сам диалог не прячем: иначе полцикла карточка стоит пустой
+   и это читается как поломка, а не как анимация. */
+@keyframes lead-badge {
+  0%, 44%   { opacity: 0; transform: translateY(-5px) scale(0.96); }
+  49%, 88%  { opacity: 1; transform: none; }
+  96%, 100% { opacity: 0; transform: translateY(-5px) scale(0.96); }
+}
+
+/* Статус бота в шапке. Две строки лежат в одной ячейке грида и меняются
+   встречной прозрачностью: шапка не прыгает по высоте, а на последнем
+   кадре цикла (куда схлопывается `prefers-reduced-motion`) остаётся
+   спокойное «бот». */
+@keyframes lead-status {
+  0%, 74%   { opacity: 1; }
+  80%, 92%  { opacity: 0; }
+  97%, 100% { opacity: 1; }
+}
+
+@keyframes lead-typing {
+  0%, 74%   { opacity: 0; }
+  80%, 92%  { opacity: 1; }
+  97%, 100% { opacity: 0; }
+}
+
+/* Счётчик новых заявок в админке: заявка доехала — число щёлкнуло.
+   Та же встречная прозрачность, что у статуса бота. */
+@keyframes lead-count-before {
+  0%, 58%   { opacity: 1; }
+  66%, 100% { opacity: 0; }
+}
+
+@keyframes lead-count-after {
+  0%, 58%   { opacity: 0; }
+  66%, 100% { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
