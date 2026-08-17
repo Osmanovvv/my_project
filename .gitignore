@@ -43,3 +43,11 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Отчёты Lighthouse и прочие временные файлы замеров — в репозиторий
+# не попадают. Однажды уже попали: команда замера писала JSON в корень.
+lighthouse*.json
+lh-*.json
+lh-*.txt
+g-*.json
+f-*.json
