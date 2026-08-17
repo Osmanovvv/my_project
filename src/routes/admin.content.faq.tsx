@@ -3,6 +3,7 @@ import { useMemo, useState } from "react";
 import { ArrowDown, ArrowUp, Plus, Trash2 } from "lucide-react";
 
 import { PageHead, SaveBar, TextArea, TextInput } from "../components/admin/fields";
+import { EntityCard } from "../components/admin/EntityCard";
 import { useSaver } from "../components/admin/use-saver";
 import { fetchAdminContent, saveFaq } from "../lib/admin.rpc";
 
@@ -19,9 +20,13 @@ export const Route = createFileRoute("/admin/content/faq")({
 
 type Row = { id?: number; q: string; a: string; preview?: boolean };
 
+/** Ключ карточки: у новых записей id ещё нет. */
+const keyOf = (row: Row, index: number) => (row.id != null ? `id-${row.id}` : `new-${index}`);
+
 function FaqPage() {
   const { faq } = Route.useLoaderData();
   const [rows, setRows] = useState<Row[]>(faq);
+  const [openKey, setOpenKey] = useState<string | null>(null);
 
   const dirty = useMemo(() => JSON.stringify(rows) !== JSON.stringify(faq), [rows, faq]);
   const save = useSaver(() => saveFaq({ data: { items: rows } }), dirty);
@@ -40,13 +45,22 @@ function FaqPage() {
     save.reset();
   }
 
+  function add() {
+    const index = rows.length;
+    setRows((prev) => [...prev, { q: "", a: "", preview: false }]);
+    /* Новый вопрос сразу раскрыт: иначе после нажатия «Добавить»
+       на экране ничего не меняется, кроме ещё одной свёрнутой строки. */
+    setOpenKey(`new-${index}`);
+    save.reset();
+  }
+
   const previewCount = rows.filter((r) => r.preview).length;
 
   return (
-    <div className="space-y-4 pb-24">
+    <div className="space-y-2 pb-24">
       <PageHead
         title="Вопросы и ответы"
-        note="Порядок здесь — порядок на странице вопросов. Отмеченные галочкой попадают в краткий блок на главной."
+        note="Порядок здесь — порядок на странице вопросов. Отмеченные попадают в краткий блок на главной."
       />
 
       <div className="rounded-xl border border-border bg-muted/40 p-3 text-xs text-muted-foreground">
@@ -56,47 +70,52 @@ function FaqPage() {
         разойдутся с тарифами, когда поменяете цены. Доступны start, business, system.
       </div>
 
-      {rows.map((row, index) => (
-        <div
-          key={row.id ?? `new-${index}`}
-          className="rounded-xl border border-border bg-background p-4"
-        >
-          <div className="mb-3 flex items-center gap-1">
-            <span className="text-xs text-muted-foreground">№{index + 1}</span>
-            <div className="ml-auto flex items-center">
-              <button
-                type="button"
-                onClick={() => move(index, -1)}
-                disabled={index === 0}
-                aria-label="Выше"
-                className="grid h-9 w-8 place-items-center rounded-md text-muted-foreground transition hover:bg-muted hover:text-foreground disabled:pointer-events-none disabled:opacity-25"
-              >
-                <ArrowUp className="h-3.5 w-3.5" />
-              </button>
-              <button
-                type="button"
-                onClick={() => move(index, 1)}
-                disabled={index === rows.length - 1}
-                aria-label="Ниже"
-                className="grid h-9 w-8 place-items-center rounded-md text-muted-foreground transition hover:bg-muted hover:text-foreground disabled:pointer-events-none disabled:opacity-25"
-              >
-                <ArrowDown className="h-3.5 w-3.5" />
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setRows((prev) => prev.filter((_, i) => i !== index));
-                  save.reset();
-                }}
-                aria-label="Удалить вопрос"
-                className="grid h-9 w-9 place-items-center rounded-md text-muted-foreground transition hover:bg-destructive/10 hover:text-destructive"
-              >
-                <Trash2 className="h-3.5 w-3.5" />
-              </button>
-            </div>
-          </div>
-
-          <div className="space-y-3">
+      <div className="space-y-2 pt-1">
+        {rows.map((row, index) => (
+          <EntityCard
+            key={keyOf(row, index)}
+            title={row.q || "Новый вопрос"}
+            summary={
+              (row.preview ? "на главной · " : "") +
+              (row.a ? row.a.slice(0, 70) + (row.a.length > 70 ? "…" : "") : "ответ не заполнен")
+            }
+            open={openKey === keyOf(row, index)}
+            onToggle={() => setOpenKey(openKey === keyOf(row, index) ? null : keyOf(row, index))}
+            dirty={JSON.stringify(row) !== JSON.stringify(faq[index])}
+            actions={
+              <>
+                <button
+                  type="button"
+                  onClick={() => move(index, -1)}
+                  disabled={index === 0}
+                  aria-label="Выше"
+                  className="grid h-9 w-8 place-items-center rounded-md text-muted-foreground transition hover:bg-muted hover:text-foreground disabled:pointer-events-none disabled:opacity-25"
+                >
+                  <ArrowUp className="h-3.5 w-3.5" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => move(index, 1)}
+                  disabled={index === rows.length - 1}
+                  aria-label="Ниже"
+                  className="grid h-9 w-8 place-items-center rounded-md text-muted-foreground transition hover:bg-muted hover:text-foreground disabled:pointer-events-none disabled:opacity-25"
+                >
+                  <ArrowDown className="h-3.5 w-3.5" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setRows((prev) => prev.filter((_, i) => i !== index));
+                    save.reset();
+                  }}
+                  aria-label="Удалить вопрос"
+                  className="grid h-9 w-9 place-items-center rounded-md text-muted-foreground transition hover:bg-destructive/10 hover:text-destructive"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </button>
+              </>
+            }
+          >
             <TextInput
               label="Вопрос"
               value={row.q}
@@ -122,17 +141,14 @@ function FaqPage() {
                 {previewCount > 0 ? `сейчас там ${previewCount}` : "сейчас блок скрыт"}
               </span>
             </label>
-          </div>
-        </div>
-      ))}
+          </EntityCard>
+        ))}
+      </div>
 
       <button
         type="button"
-        onClick={() => {
-          setRows((prev) => [...prev, { q: "", a: "", preview: false }]);
-          save.reset();
-        }}
-        className="inline-flex h-10 items-center gap-2 rounded-lg border border-dashed border-border px-4 text-sm text-muted-foreground transition hover:border-accent/40 hover:text-foreground"
+        onClick={add}
+        className="mt-2 inline-flex h-10 items-center gap-2 rounded-lg border border-dashed border-border px-4 text-sm text-muted-foreground transition hover:border-accent/40 hover:text-foreground"
       >
         <Plus className="h-4 w-4" />
         Добавить вопрос
