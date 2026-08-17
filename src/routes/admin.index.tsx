@@ -2,7 +2,7 @@ import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { formatDistanceToNow, format, isToday, isYesterday } from "date-fns";
 import { ru } from "date-fns/locale";
-import { Check, Inbox, Phone, Send, TriangleAlert, Trash2, X } from "lucide-react";
+import { Check, ChevronLeft, Inbox, Phone, Send, TriangleAlert, Trash2, X } from "lucide-react";
 
 import {
   fetchLeads,
@@ -55,9 +55,17 @@ export const Route = createFileRoute("/admin/")({
    * в шапке и переход после входа, — а адрес по умолчанию превратится
    * в `/admin?status=all`. Отсутствие параметра и означает «все».
    */
-  validateSearch: (search: Record<string, unknown>): { status?: string } => ({
+  validateSearch: (search: Record<string, unknown>): { status?: string; lead?: number } => ({
     status: typeof search.status === "string" ? search.status : undefined,
+    /**
+     * Открытая заявка живёт в адресе, а не в состоянии компонента. На телефоне
+     * карточка разворачивается во весь экран, и человек закрывает её кнопкой
+     * «Назад», не задумываясь. Если бы состояние было внутренним, «Назад»
+     * уводил бы со всей админки. Заодно ссылку на заявку можно сохранить.
+     */
+    lead: Number(search.lead) > 0 ? Number(search.lead) : undefined,
   }),
+  /* Только статус: смена открытой заявки не должна перезапрашивать список. */
   loaderDeps: ({ search }) => ({ status: search.status ?? "all" }),
   loader: ({ deps }) => fetchLeads({ data: { status: deps.status } }),
   head: () => ({
@@ -71,19 +79,56 @@ export const Route = createFileRoute("/admin/")({
 
 function LeadsPage() {
   const data = Route.useLoaderData();
-  const status = Route.useSearch().status ?? "all";
+  const search = Route.useSearch();
+  const status = search.status ?? "all";
+  const openId = search.lead ?? null;
   const router = useRouter();
-  const [openId, setOpenId] = useState<number | null>(null);
 
   const selected = data.leads.find((lead) => lead.id === openId) ?? null;
 
-  async function open(lead: LeadRecord) {
-    setOpenId(lead.id);
+  function open(lead: LeadRecord) {
+    router.navigate({ to: "/admin", search: (prev) => ({ ...prev, lead: lead.id }) });
     if (lead.read_at === null) {
-      await readLead({ data: { id: lead.id } });
-      router.invalidate();
+      void readLead({ data: { id: lead.id } }).then(() => router.invalidate());
     }
   }
+
+  function close() {
+    router.navigate({ to: "/admin", search: (prev) => ({ ...prev, lead: undefined }) });
+  }
+
+  /**
+   * На узком экране карточка — окно поверх всего, и фон под ним скроллиться
+   * не должен: иначе список уезжает под пальцем, а вернувшись, человек
+   * оказывается не там, где был. На широком экране карточка стоит в колонке,
+   * и блокировать прокрутку страницы нельзя.
+   */
+  useEffect(() => {
+    if (!selected) return;
+
+    const media = window.matchMedia("(max-width: 1023px)");
+    const apply = () => {
+      document.body.style.overflow = media.matches ? "hidden" : "";
+    };
+    apply();
+    media.addEventListener("change", apply);
+
+    return () => {
+      media.removeEventListener("change", apply);
+      document.body.style.overflow = "";
+    };
+  }, [selected]);
+
+  /* Escape закрывает — привычка с десктопа, стоит копейки. */
+  useEffect(() => {
+    if (!selected) return;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") close();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selected]);
 
   return (
     <div className="space-y-5">
@@ -132,15 +177,22 @@ function LeadsPage() {
             ))}
           </ul>
 
-          <div className="lg:sticky lg:top-20">
-            {selected ? (
-              <LeadDetail key={selected.id} lead={selected} onClose={() => setOpenId(null)} />
-            ) : (
-              <div className="hidden rounded-2xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground lg:block">
-                Выберите заявку слева
+          {/* Одна карточка, две подачи. До 1024 — окно во весь экран поверх
+              списка: иначе на телефоне она уезжает вниз, и до неё надо
+              листать тем дольше, чем больше заявок. От 1024 — обычная
+              правая колонка, как было. Переключение чистым CSS, без замера
+              ширины в JavaScript: иначе при загрузке моргает не та раскладка. */}
+          {selected ? (
+            <div className="fixed inset-0 z-50 overflow-y-auto overscroll-contain bg-muted/40 p-3 lg:static lg:z-auto lg:overflow-visible lg:bg-transparent lg:p-0">
+              <div className="lg:sticky lg:top-20">
+                <LeadDetail key={selected.id} lead={selected} onClose={close} />
               </div>
-            )}
-          </div>
+            </div>
+          ) : (
+            <div className="hidden rounded-2xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground lg:block lg:sticky lg:top-20">
+              Выберите заявку слева
+            </div>
+          )}
         </div>
       )}
     </div>
@@ -274,7 +326,19 @@ function LeadDetail({ lead, onClose }: { lead: LeadRecord; onClose: () => void }
   const phone = toPhoneLink(lead.contact);
 
   return (
-    <article className="rounded-2xl border border-border bg-background p-5 shadow-sm">
+    <article className="rounded-2xl border border-border bg-background p-4 shadow-sm sm:p-5">
+      {/* Полоса возврата — только на узком экране, где карточка занимает
+          весь экран. Не иконка-крестик в углу, а широкая кнопка с подписью:
+          на телефоне в неё попадают пальцем не глядя, а «Назад» в браузере
+          делает то же самое (заявка записана в адрес страницы). */}
+      <button
+        type="button"
+        onClick={onClose}
+        className="-ml-2 mb-3 inline-flex h-10 items-center gap-1.5 rounded-lg px-2 text-sm font-medium text-muted-foreground transition hover:bg-muted hover:text-foreground lg:hidden"
+      >
+        <ChevronLeft className="h-4 w-4" />К списку
+      </button>
+
       <header className="flex items-start gap-3">
         <div className="min-w-0 flex-1">
           <h2 className="font-display text-lg leading-tight">{lead.name}</h2>
@@ -286,7 +350,7 @@ function LeadDetail({ lead, onClose }: { lead: LeadRecord; onClose: () => void }
           type="button"
           onClick={onClose}
           aria-label="Закрыть заявку"
-          className="grid h-8 w-8 place-items-center rounded-lg text-muted-foreground transition hover:bg-muted hover:text-foreground lg:hidden"
+          className="hidden h-8 w-8 place-items-center rounded-lg text-muted-foreground transition hover:bg-muted hover:text-foreground lg:grid"
         >
           <X className="h-4 w-4" />
         </button>
