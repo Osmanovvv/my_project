@@ -221,7 +221,15 @@ function normalizeCaseInput(raw: Record<string, unknown>) {
           .slice(0, limit)
       : [];
 
+  /* Из обложки берём ТОЛЬКО идентификатор. Адрес и размеры сервер поднимет
+     из базы сам: присланные браузером размеры могут не совпасть с настоящими,
+     а на них держится вёрстка — разойдутся, и страница снова начнёт дёргаться
+     при загрузке картинок. */
+  const coverRaw = raw.cover as { id?: unknown } | null | undefined;
+  const coverId = coverRaw && Number(coverRaw.id) > 0 ? Number(coverRaw.id) : null;
+
   return {
+    coverId,
     slug: text(raw.slug, 60),
     title: text(raw.title, 120),
     client: text(raw.client, 120),
@@ -248,9 +256,20 @@ async function toCaseInput(payload: CasePayload) {
   const { isGradientKey, isPattern } = await import("../data/case-presets");
   const { TAG_ORDER } = await import("../data/cases");
   const { SERVICE_IDS } = await import("../data/services");
+  const { mediaById, mediaUrl } = await import("../server/media.server");
+
+  /* Картинку поднимаем из базы по идентификатору. Нет такой записи —
+     обложки нет: кейс нарисуется заглушкой, а не ссылкой в никуда. */
+  const media = payload.coverId ? mediaById(payload.coverId) : undefined;
+  const cover = media
+    ? { id: media.id, url: mediaUrl(media), width: media.width, height: media.height }
+    : null;
+
+  const { coverId: _ignored, ...rest } = payload;
 
   return {
-    ...payload,
+    ...rest,
+    cover,
     gradient: isGradientKey(payload.gradient) ? payload.gradient : ("indigo" as const),
     pattern: isPattern(payload.pattern) ? payload.pattern : ("grid" as const),
     tags: payload.tags.filter((tag) => (TAG_ORDER as string[]).includes(tag)) as Array<

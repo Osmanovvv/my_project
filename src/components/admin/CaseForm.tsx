@@ -3,18 +3,10 @@ import { Check, ExternalLink, Loader2, TriangleAlert } from "lucide-react";
 
 import { Section } from "./Section";
 import { ListField } from "./ListField";
-import {
-  GRADIENT_KEYS,
-  GRADIENT_LABELS,
-  GRADIENTS,
-  CASE_PATTERNS,
-  PATTERN_LABELS,
-  type CasePattern,
-  type GradientKey,
-} from "../../data/case-presets";
+import { CoverField } from "./CoverField";
+import { GRADIENT_LABELS } from "../../data/case-presets";
 import { TAG_ORDER, type CaseStudy, type CaseTag } from "../../data/cases";
 import { SERVICES, type ServiceId } from "../../data/services";
-import { Pattern } from "../site/Portfolio";
 
 /**
  * Форма кейса.
@@ -243,54 +235,16 @@ export function CaseForm({ initial, submitLabel, onSubmit, publicHref }: Props) 
       <Section
         id="case-cover"
         title="Обложка"
-        summary={`${GRADIENT_LABELS[values.gradient]} · ${PATTERN_LABELS[values.pattern]}`}
+        summary={values.cover ? "фотография" : `заглушка · ${GRADIENT_LABELS[values.gradient]}`}
       >
-        <div>
-          <span className="text-xs text-muted-foreground">Цвет</span>
-          <div className="mt-2 grid grid-cols-3 gap-2 sm:grid-cols-6">
-            {GRADIENT_KEYS.map((key) => (
-              <button
-                key={key}
-                type="button"
-                onClick={() => set("gradient", key as GradientKey)}
-                aria-pressed={values.gradient === key}
-                title={GRADIENT_LABELS[key]}
-                className={
-                  "aspect-[4/3] overflow-hidden rounded-lg border-2 transition " +
-                  (values.gradient === key
-                    ? "border-accent"
-                    : "border-transparent hover:border-border")
-                }
-              >
-                <span className={`block h-full w-full bg-gradient-to-br ${GRADIENTS[key]}`} />
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div>
-          <span className="text-xs text-muted-foreground">Узор</span>
-          <div className="mt-2 flex flex-wrap gap-1.5">
-            {CASE_PATTERNS.map((kind) => (
-              <Chip
-                key={kind}
-                active={values.pattern === kind}
-                onClick={() => set("pattern", kind as CasePattern)}
-              >
-                {PATTERN_LABELS[kind]}
-              </Chip>
-            ))}
-          </div>
-        </div>
-
-        <div>
-          <span className="text-xs text-muted-foreground">Как будет выглядеть</span>
-          <div
-            className={`relative mt-2 aspect-[4/3] max-w-56 overflow-hidden rounded-xl bg-gradient-to-br ${GRADIENTS[values.gradient]}`}
-          >
-            <Pattern kind={values.pattern} />
-          </div>
-        </div>
+        <CoverField
+          value={values.cover}
+          onChange={(next) => set("cover", next)}
+          gradient={values.gradient}
+          pattern={values.pattern}
+          onGradientChange={(next) => set("gradient", next)}
+          onPatternChange={(next) => set("pattern", next)}
+        />
       </Section>
 
       {/* Полоса сохранения прилипает к низу: форма длинная, и кнопка,

@@ -11,6 +11,7 @@
 import { all, get, run, transaction, contentVersion, bumpContentVersion } from "./db.server";
 import { LEGACY_CASES, type CaseStudy, type CaseTag } from "../data/cases";
 import { isGradientKey, isPattern } from "../data/case-presets";
+import { purgeUnusedMedia } from "./media.server";
 import type { ServiceId } from "../data/services";
 
 type CaseRow = {
@@ -34,6 +35,11 @@ type CaseRow = {
   position: number;
   created_at: number;
   updated_at: number;
+  /* Поля обложки приходят соединением с таблицей картинок. */
+  cover_hash: string | null;
+  cover_ext: string | null;
+  cover_width: number | null;
+  cover_height: number | null;
 };
 
 /** Разбор JSON-списка из базы. Битое значение не должно ронять страницу. */
@@ -60,6 +66,18 @@ function toCase(row: CaseRow): CaseStudy {
        заменяется на рабочий, а не роняет сетку кейсов. */
     gradient: isGradientKey(row.gradient) ? row.gradient : "indigo",
     pattern: isPattern(row.pattern) ? row.pattern : "grid",
+    /* Обложка собирается только если картинка на месте: запись могли
+       удалить, и тогда кейс должен нарисоваться заглушкой, а не битым
+       изображением. */
+    cover:
+      row.cover_id && row.cover_hash && row.cover_ext && row.cover_width && row.cover_height
+        ? {
+            id: row.cover_id,
+            url: `/media/${row.cover_hash}.${row.cover_ext}`,
+            width: row.cover_width,
+            height: row.cover_height,
+          }
+        : null,
     tags: parseList(row.tags) as CaseTag[],
     challenge: parseList(row.challenge),
     solution: parseList(row.solution),
@@ -71,7 +89,18 @@ function toCase(row: CaseRow): CaseStudy {
   };
 }
 
-const SELECT = "SELECT * FROM case_study";
+/**
+ * Кейс вместе с обложкой. LEFT JOIN, а не INNER: у большинства кейсов
+ * снимка нет, и они должны читаться так же, как с ним.
+ */
+const SELECT = `
+  SELECT c.*,
+         m.hash   AS cover_hash,
+         m.ext    AS cover_ext,
+         m.width  AS cover_width,
+         m.height AS cover_height
+  FROM case_study c
+  LEFT JOIN media m ON m.id = c.cover_id`;
 
 // ──────────────────────────────────────────────── первичное заполнение ──────
 
@@ -105,9 +134,9 @@ function insertCase(item: CaseStudy): void {
   run(
     `INSERT INTO case_study
        (slug, title, client, industry, result, summary, timeline, gradient, pattern,
-        tags, challenge, solution, delivered, stack, services, published, position,
-        created_at, updated_at)
-     VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+        cover_id, tags, challenge, solution, delivered, stack, services, published,
+        position, created_at, updated_at)
+     VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
     [
       item.slug,
       item.title,
@@ -118,6 +147,7 @@ function insertCase(item: CaseStudy): void {
       item.timeline,
       item.gradient,
       item.pattern,
+      item.cover?.id ?? null,
       JSON.stringify(item.tags),
       JSON.stringify(item.challenge),
       JSON.stringify(item.solution),
@@ -143,7 +173,9 @@ export function publishedCases(): CaseStudy[] {
   const version = contentVersion();
   if (cache && cache.version === version) return cache.cases;
 
-  const rows = all<CaseRow>(`${SELECT} WHERE published = 1 ORDER BY position ASC, created_at ASC`);
+  const rows = all<CaseRow>(
+    `${SELECT} WHERE c.published = 1 ORDER BY c.position ASC, c.created_at ASC`,
+  );
   const cases = rows.map(toCase);
   cache = { version, cases };
   return cases;
@@ -152,14 +184,14 @@ export function publishedCases(): CaseStudy[] {
 /** Все кейсы, включая черновики. Только для админки. */
 export function allCases(): CaseStudy[] {
   seedCasesIfNeeded();
-  return all<CaseRow>(`${SELECT} ORDER BY position ASC, created_at ASC`).map(toCase);
+  return all<CaseRow>(`${SELECT} ORDER BY c.position ASC, c.created_at ASC`).map(toCase);
 }
 
 /** Кейс по адресу. `includeDrafts` — для предпросмотра из админки. */
 export function caseBySlug(slug: string, includeDrafts = false): CaseStudy | undefined {
   seedCasesIfNeeded();
   const row = get<CaseRow>(
-    includeDrafts ? `${SELECT} WHERE slug = ?` : `${SELECT} WHERE slug = ? AND published = 1`,
+    includeDrafts ? `${SELECT} WHERE c.slug = ?` : `${SELECT} WHERE c.slug = ? AND c.published = 1`,
     [slug],
   );
   return row ? toCase(row) : undefined;
@@ -240,8 +272,9 @@ export function updateCase(slug: string, input: CaseInput): void {
   run(
     `UPDATE case_study SET
        title = ?, client = ?, industry = ?, result = ?, summary = ?, timeline = ?,
-       gradient = ?, pattern = ?, tags = ?, challenge = ?, solution = ?,
-       delivered = ?, stack = ?, services = ?, published = ?, updated_at = ?
+       gradient = ?, pattern = ?, cover_id = ?, tags = ?, challenge = ?,
+       solution = ?, delivered = ?, stack = ?, services = ?, published = ?,
+       updated_at = ?
      WHERE slug = ?`,
     [
       input.title,
@@ -252,6 +285,7 @@ export function updateCase(slug: string, input: CaseInput): void {
       input.timeline,
       input.gradient,
       input.pattern,
+      input.cover?.id ?? null,
       JSON.stringify(input.tags),
       JSON.stringify(input.challenge),
       JSON.stringify(input.solution),
@@ -268,6 +302,10 @@ export function updateCase(slug: string, input: CaseInput): void {
 
 export function deleteCase(slug: string): void {
   run("DELETE FROM case_study WHERE slug = ?", [slug]);
+  /* Снимок удалённого кейса больше не нужен. Не подобрать его сейчас —
+     значит копить в каталоге файлы, про которые через год никто
+     не вспомнит, используются они или нет. */
+  purgeUnusedMedia();
   bumpContentVersion();
 }
 

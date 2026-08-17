@@ -112,13 +112,32 @@ function CasePage() {
               </dl>
             </div>
 
-            {/* Обложка — тот же паттерн, что в карточке на /works */}
+            {/* Обложка — та же, что в карточке на /works: снимок или заглушка. */}
             <div
               className={`relative aspect-[4/3] overflow-hidden rounded-3xl border border-border bg-gradient-to-br ${gradientClasses(study.gradient)}`}
             >
-              <Pattern kind={study.pattern} />
+              {study.cover ? (
+                /* Обложка кейса — крупнейшая картинка первого экрана,
+                   поэтому грузится сразу, а не лениво. */
+                <img
+                  src={study.cover.url}
+                  width={study.cover.width}
+                  height={study.cover.height}
+                  alt={study.title}
+                  loading="eager"
+                  decoding="sync"
+                  className="absolute inset-0 h-full w-full object-cover"
+                />
+              ) : (
+                <Pattern kind={study.pattern} />
+              )}
               <div className="absolute inset-x-0 bottom-0 p-6">
-                <div className="inline-flex rounded-full bg-white/20 px-3 py-1.5 text-xs font-medium text-white backdrop-blur-md">
+                {/* Затемнение снизу: поверх фотографии белый текст на
+                    полупрозрачной плашке читается не на каждом снимке. */}
+                {study.cover && (
+                  <div className="pointer-events-none absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-black/55 to-transparent" />
+                )}
+                <div className="relative inline-flex rounded-full bg-white/20 px-3 py-1.5 text-xs font-medium text-white backdrop-blur-md">
                   {study.result}
                 </div>
               </div>
@@ -237,7 +256,19 @@ function CasePage() {
                 <div
                   className={`relative aspect-[16/9] bg-gradient-to-br ${gradientClasses(item.gradient)} overflow-hidden`}
                 >
-                  <Pattern kind={item.pattern} />
+                  {item.cover ? (
+                    <img
+                      src={item.cover.url}
+                      width={item.cover.width}
+                      height={item.cover.height}
+                      alt={item.title}
+                      loading="lazy"
+                      decoding="async"
+                      className="absolute inset-0 h-full w-full object-cover"
+                    />
+                  ) : (
+                    <Pattern kind={item.pattern} />
+                  )}
                 </div>
                 <div className="p-5">
                   <div className="text-xs text-muted-foreground">{item.client}</div>

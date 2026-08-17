@@ -27,6 +27,8 @@ import { Route as WorksSlugRouteImport } from './routes/works.$slug'
 import { Route as ServicesWebsitesRouteImport } from './routes/services.websites'
 import { Route as ServicesSupportRouteImport } from './routes/services.support'
 import { Route as ServicesBotsRouteImport } from './routes/services.bots'
+import { Route as MediaFileRouteImport } from './routes/media.$file'
+import { Route as ApiMediaRouteImport } from './routes/api.media'
 import { Route as ApiLeadRouteImport } from './routes/api.lead'
 import { Route as AdminLoginRouteImport } from './routes/admin.login'
 import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
@@ -134,6 +136,16 @@ const ServicesBotsRoute = ServicesBotsRouteImport.update({
   path: '/bots',
   getParentRoute: () => ServicesRoute,
 } as any)
+const MediaFileRoute = MediaFileRouteImport.update({
+  id: '/media/$file',
+  path: '/media/$file',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiMediaRoute = ApiMediaRouteImport.update({
+  id: '/api/media',
+  path: '/api/media',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiLeadRoute = ApiLeadRouteImport.update({
   id: '/api/lead',
   path: '/api/lead',
@@ -236,6 +248,8 @@ export interface FileRoutesByFullPath {
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/admin/login': typeof AdminLoginRoute
   '/api/lead': typeof ApiLeadRoute
+  '/api/media': typeof ApiMediaRoute
+  '/media/$file': typeof MediaFileRoute
   '/services/bots': typeof ServicesBotsRouteWithChildren
   '/services/support': typeof ServicesSupportRoute
   '/services/websites': typeof ServicesWebsitesRouteWithChildren
@@ -269,6 +283,8 @@ export interface FileRoutesByTo {
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/admin/login': typeof AdminLoginRoute
   '/api/lead': typeof ApiLeadRoute
+  '/api/media': typeof ApiMediaRoute
+  '/media/$file': typeof MediaFileRoute
   '/services/support': typeof ServicesSupportRoute
   '/works/$slug': typeof WorksSlugRoute
   '/admin': typeof AdminIndexRoute
@@ -304,6 +320,8 @@ export interface FileRoutesById {
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/admin/login': typeof AdminLoginRoute
   '/api/lead': typeof ApiLeadRoute
+  '/api/media': typeof ApiMediaRoute
+  '/media/$file': typeof MediaFileRoute
   '/services/bots': typeof ServicesBotsRouteWithChildren
   '/services/support': typeof ServicesSupportRoute
   '/services/websites': typeof ServicesWebsitesRouteWithChildren
@@ -342,6 +360,8 @@ export interface FileRouteTypes {
     | '/.well-known/oauth-protected-resource'
     | '/admin/login'
     | '/api/lead'
+    | '/api/media'
+    | '/media/$file'
     | '/services/bots'
     | '/services/support'
     | '/services/websites'
@@ -375,6 +395,8 @@ export interface FileRouteTypes {
     | '/.well-known/oauth-protected-resource'
     | '/admin/login'
     | '/api/lead'
+    | '/api/media'
+    | '/media/$file'
     | '/services/support'
     | '/works/$slug'
     | '/admin'
@@ -409,6 +431,8 @@ export interface FileRouteTypes {
     | '/.well-known/oauth-protected-resource'
     | '/admin/login'
     | '/api/lead'
+    | '/api/media'
+    | '/media/$file'
     | '/services/bots'
     | '/services/support'
     | '/services/websites'
@@ -445,6 +469,8 @@ export interface RootRouteChildren {
   Char91DotmcpChar93ListToolsRoute: typeof Char91DotmcpChar93ListToolsRoute
   Char91DotwellKnownChar93OauthProtectedResourceRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   ApiLeadRoute: typeof ApiLeadRoute
+  ApiMediaRoute: typeof ApiMediaRoute
+  MediaFileRoute: typeof MediaFileRoute
   Char91DotmcpChar93InvokeToolToolRoute: typeof Char91DotmcpChar93InvokeToolToolRoute
 }
 
@@ -575,6 +601,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/services/bots'
       preLoaderRoute: typeof ServicesBotsRouteImport
       parentRoute: typeof ServicesRoute
+    }
+    '/media/$file': {
+      id: '/media/$file'
+      path: '/media/$file'
+      fullPath: '/media/$file'
+      preLoaderRoute: typeof MediaFileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/media': {
+      id: '/api/media'
+      path: '/api/media'
+      fullPath: '/api/media'
+      preLoaderRoute: typeof ApiMediaRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/api/lead': {
       id: '/api/lead'
@@ -790,6 +830,8 @@ const rootRouteChildren: RootRouteChildren = {
   Char91DotwellKnownChar93OauthProtectedResourceRoute:
     Char91DotwellKnownChar93OauthProtectedResourceRoute,
   ApiLeadRoute: ApiLeadRoute,
+  ApiMediaRoute: ApiMediaRoute,
+  MediaFileRoute: MediaFileRoute,
   Char91DotmcpChar93InvokeToolToolRoute: Char91DotmcpChar93InvokeToolToolRoute,
 }
 export const routeTree = rootRouteImport

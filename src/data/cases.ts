@@ -25,7 +25,12 @@ export type CaseStudy = {
   tags: CaseTag[];
   /** Короткий итог для карточки. */
   result: string;
-  /** Ключ пресета обложки, НЕ классы Tailwind. См. `case-presets.ts`. */
+  /**
+   * Загруженная обложка. Пока её нет, карточка рисуется градиентом —
+   * это заглушка на время, а не второй способ оформления.
+   */
+  cover: { id: number; url: string; width: number; height: number } | null;
+  /** Ключ пресета заглушки, НЕ классы Tailwind. См. `case-presets.ts`. */
   gradient: GradientKey;
   pattern: CasePattern;
   /** Абзац-подводка на странице кейса. */
@@ -57,6 +62,7 @@ export const LEGACY_CASES: CaseStudy[] = [
     industry: "Розница и хендмейд",
     tags: ["Сайт", "Бот", "Админка"],
     result: "+62% заявок за месяц",
+    cover: null,
     gradient: "indigo",
     pattern: "circles",
     summary:
@@ -89,6 +95,7 @@ export const LEGACY_CASES: CaseStudy[] = [
     industry: "Медицина и красота",
     tags: ["Сайт", "Админка"],
     result: "Заявки не теряются между филиалами",
+    cover: null,
     gradient: "teal",
     pattern: "waves",
     summary:
@@ -121,6 +128,7 @@ export const LEGACY_CASES: CaseStudy[] = [
     industry: "Образование",
     tags: ["Сайт", "Бот"],
     result: "×2 конверсия в оплату",
+    cover: null,
     gradient: "amber",
     pattern: "dots",
     summary:
@@ -153,6 +161,7 @@ export const LEGACY_CASES: CaseStudy[] = [
     industry: "Услуги и сервис",
     tags: ["Бот", "Админка"],
     result: "−80% пропущенных записей",
+    cover: null,
     gradient: "slate",
     pattern: "diagonals",
     summary:
@@ -185,6 +194,7 @@ export const LEGACY_CASES: CaseStudy[] = [
     industry: "Строительство и ремонт",
     tags: ["Сайт", "Бот", "Админка"],
     result: "Автораспределение по бригадам",
+    cover: null,
     gradient: "emerald",
     pattern: "blocks",
     summary:
@@ -217,6 +227,7 @@ export const LEGACY_CASES: CaseStudy[] = [
     industry: "Оптовая торговля",
     tags: ["Сайт", "Админка"],
     result: "Каталог 2000+ позиций",
+    cover: null,
     gradient: "violet",
     pattern: "grid",
     summary:

@@ -14,6 +14,7 @@ const EMPTY_CASE: CaseFormValues = {
   result: "",
   summary: "",
   timeline: "",
+  cover: null,
   gradient: "indigo",
   pattern: "grid",
   tags: [],

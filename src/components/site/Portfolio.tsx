@@ -28,13 +28,28 @@ export function Portfolio({ cases }: { cases: CaseStudy[] }) {
           params={{ slug: c.slug }}
           className="group relative flex flex-col overflow-hidden rounded-3xl border border-border bg-surface hover:border-accent/40 hover:card-lift transition-all duration-300"
         >
-          {/* Классы градиента подставляются из реестра по ключу: в базе
-              лежит `indigo`, а не строка классов — иначе Tailwind не увидел бы
-              их при сборке и обложка осталась бы прозрачной. */}
+          {/* Обложка: снимок, если он загружен, иначе цветная заглушка.
+              Классы градиента подставляются из реестра по ключу — в базе
+              лежит `indigo`, а не строка классов, иначе Tailwind не увидел бы
+              их при сборке и фон остался бы прозрачным. */}
           <div
             className={`relative aspect-[4/3] bg-gradient-to-br ${gradientClasses(c.gradient)} overflow-hidden`}
           >
-            <Pattern kind={c.pattern} />
+            {c.cover ? (
+              /* width/height обязательны: без них браузер не знает пропорций
+                 до загрузки, и сетка дёргается по мере появления картинок. */
+              <img
+                src={c.cover.url}
+                width={c.cover.width}
+                height={c.cover.height}
+                alt={c.title}
+                loading="lazy"
+                decoding="async"
+                className="absolute inset-0 h-full w-full object-cover"
+              />
+            ) : (
+              <Pattern kind={c.pattern} />
+            )}
             {/* Плашка тёмная, а не светлая: градиенты карточек разной светлоты,
                 и на янтарном или бирюзовом белый текст на `bg-white/20`
                 выцветал до нечитаемого. Белое на затемнении читается на любом. */}
