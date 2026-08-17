@@ -97,16 +97,35 @@ export function isConfigured(): boolean {
  * Повторный запуск с той же переменной ничего не перезаписывает: иначе
  * смена пароля в админке откатывалась бы при каждом перезапуске сервера.
  */
+export const MIN_PASSWORD_LENGTH = 8;
+
 export function ensurePasswordFromEnv(): void {
   if (isConfigured()) return;
 
   const initial = process.env.ADMIN_PASSWORD?.trim();
-  if (!initial || initial.length < 8) return;
+  if (!initial) return;
+
+  /**
+   * Короткий пароль отвергается — но ГРОМКО.
+   *
+   * Раньше он отбрасывался молча: сервер поднимался, вход не работал,
+   * и понять почему было невозможно ни из интерфейса, ни из логов.
+   * Владелец задал бы `ADMIN_PASSWORD=1234`, перезапустил сервер
+   * и упёрся бы в «Пароль ещё не задан», не понимая, при чём тут он.
+   */
+  if (initial.length < MIN_PASSWORD_LENGTH) {
+    console.error(
+      `[admin] Пароль из ADMIN_PASSWORD не принят: ${initial.length} символов, ` +
+        `нужно минимум ${MIN_PASSWORD_LENGTH}. Задайте пароль подлиннее и перезапустите сервер.`,
+    );
+    return;
+  }
 
   run("UPDATE admin_account SET password_hash = ?, password_set_at = ? WHERE id = 1", [
     hashPassword(initial),
     Date.now(),
   ]);
+  console.log("[admin] Пароль администратора принят из ADMIN_PASSWORD и сохранён в базе.");
 }
 
 export function setPassword(plain: string): void {

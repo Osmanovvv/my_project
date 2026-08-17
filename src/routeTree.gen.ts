@@ -31,11 +31,11 @@ import { Route as MediaFileRouteImport } from './routes/media.$file'
 import { Route as ApiMediaRouteImport } from './routes/api.media'
 import { Route as ApiLeadRouteImport } from './routes/api.lead'
 import { Route as AdminLoginRouteImport } from './routes/admin.login'
-import { Route as AdminContentRouteImport } from './routes/admin.content'
 import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
 import { Route as Char91DotmcpChar93ListToolsRouteImport } from './routes/[.mcp]/list-tools'
 import { Route as ServicesWebsitesIndexRouteImport } from './routes/services.websites.index'
 import { Route as ServicesBotsIndexRouteImport } from './routes/services.bots.index'
+import { Route as AdminContentIndexRouteImport } from './routes/admin.content.index'
 import { Route as AdminCasesIndexRouteImport } from './routes/admin.cases.index'
 import { Route as ServicesWebsitesLandingRouteImport } from './routes/services.websites.landing'
 import { Route as ServicesWebsitesEcommerceRouteImport } from './routes/services.websites.ecommerce'
@@ -43,6 +43,12 @@ import { Route as ServicesWebsitesCorporateRouteImport } from './routes/services
 import { Route as ServicesBotsTelegramRouteImport } from './routes/services.bots.telegram'
 import { Route as ServicesBotsMiniappRouteImport } from './routes/services.bots.miniapp'
 import { Route as ServicesBotsMaxRouteImport } from './routes/services.bots.max'
+import { Route as AdminContentTextsRouteImport } from './routes/admin.content.texts'
+import { Route as AdminContentServicesRouteImport } from './routes/admin.content.services'
+import { Route as AdminContentPackagesRouteImport } from './routes/admin.content.packages'
+import { Route as AdminContentMetricsRouteImport } from './routes/admin.content.metrics'
+import { Route as AdminContentFaqRouteImport } from './routes/admin.content.faq'
+import { Route as AdminContentContactsRouteImport } from './routes/admin.content.contacts'
 import { Route as AdminCasesNewRouteImport } from './routes/admin.cases.new'
 import { Route as AdminCasesSlugRouteImport } from './routes/admin.cases.$slug'
 import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
@@ -157,11 +163,6 @@ const AdminLoginRoute = AdminLoginRouteImport.update({
   path: '/login',
   getParentRoute: () => AdminRoute,
 } as any)
-const AdminContentRoute = AdminContentRouteImport.update({
-  id: '/content',
-  path: '/content',
-  getParentRoute: () => AdminRoute,
-} as any)
 const Char91DotwellKnownChar93OauthProtectedResourceRoute =
   Char91DotwellKnownChar93OauthProtectedResourceRouteImport.update({
     id: '/.well-known/oauth-protected-resource',
@@ -183,6 +184,11 @@ const ServicesBotsIndexRoute = ServicesBotsIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => ServicesBotsRoute,
+} as any)
+const AdminContentIndexRoute = AdminContentIndexRouteImport.update({
+  id: '/content/',
+  path: '/content/',
+  getParentRoute: () => AdminRoute,
 } as any)
 const AdminCasesIndexRoute = AdminCasesIndexRouteImport.update({
   id: '/cases/',
@@ -221,6 +227,36 @@ const ServicesBotsMaxRoute = ServicesBotsMaxRouteImport.update({
   path: '/max',
   getParentRoute: () => ServicesBotsRoute,
 } as any)
+const AdminContentTextsRoute = AdminContentTextsRouteImport.update({
+  id: '/content/texts',
+  path: '/content/texts',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminContentServicesRoute = AdminContentServicesRouteImport.update({
+  id: '/content/services',
+  path: '/content/services',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminContentPackagesRoute = AdminContentPackagesRouteImport.update({
+  id: '/content/packages',
+  path: '/content/packages',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminContentMetricsRoute = AdminContentMetricsRouteImport.update({
+  id: '/content/metrics',
+  path: '/content/metrics',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminContentFaqRoute = AdminContentFaqRouteImport.update({
+  id: '/content/faq',
+  path: '/content/faq',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminContentContactsRoute = AdminContentContactsRouteImport.update({
+  id: '/content/contacts',
+  path: '/content/contacts',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminCasesNewRoute = AdminCasesNewRouteImport.update({
   id: '/cases/new',
   path: '/cases/new',
@@ -252,7 +288,6 @@ export interface FileRoutesByFullPath {
   '/works': typeof WorksRouteWithChildren
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
-  '/admin/content': typeof AdminContentRoute
   '/admin/login': typeof AdminLoginRoute
   '/api/lead': typeof ApiLeadRoute
   '/api/media': typeof ApiMediaRoute
@@ -267,6 +302,12 @@ export interface FileRoutesByFullPath {
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/admin/cases/$slug': typeof AdminCasesSlugRoute
   '/admin/cases/new': typeof AdminCasesNewRoute
+  '/admin/content/contacts': typeof AdminContentContactsRoute
+  '/admin/content/faq': typeof AdminContentFaqRoute
+  '/admin/content/metrics': typeof AdminContentMetricsRoute
+  '/admin/content/packages': typeof AdminContentPackagesRoute
+  '/admin/content/services': typeof AdminContentServicesRoute
+  '/admin/content/texts': typeof AdminContentTextsRoute
   '/services/bots/max': typeof ServicesBotsMaxRoute
   '/services/bots/miniapp': typeof ServicesBotsMiniappRoute
   '/services/bots/telegram': typeof ServicesBotsTelegramRoute
@@ -274,6 +315,7 @@ export interface FileRoutesByFullPath {
   '/services/websites/ecommerce': typeof ServicesWebsitesEcommerceRoute
   '/services/websites/landing': typeof ServicesWebsitesLandingRoute
   '/admin/cases/': typeof AdminCasesIndexRoute
+  '/admin/content/': typeof AdminContentIndexRoute
   '/services/bots/': typeof ServicesBotsIndexRoute
   '/services/websites/': typeof ServicesWebsitesIndexRoute
 }
@@ -288,7 +330,6 @@ export interface FileRoutesByTo {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
-  '/admin/content': typeof AdminContentRoute
   '/admin/login': typeof AdminLoginRoute
   '/api/lead': typeof ApiLeadRoute
   '/api/media': typeof ApiMediaRoute
@@ -301,6 +342,12 @@ export interface FileRoutesByTo {
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/admin/cases/$slug': typeof AdminCasesSlugRoute
   '/admin/cases/new': typeof AdminCasesNewRoute
+  '/admin/content/contacts': typeof AdminContentContactsRoute
+  '/admin/content/faq': typeof AdminContentFaqRoute
+  '/admin/content/metrics': typeof AdminContentMetricsRoute
+  '/admin/content/packages': typeof AdminContentPackagesRoute
+  '/admin/content/services': typeof AdminContentServicesRoute
+  '/admin/content/texts': typeof AdminContentTextsRoute
   '/services/bots/max': typeof ServicesBotsMaxRoute
   '/services/bots/miniapp': typeof ServicesBotsMiniappRoute
   '/services/bots/telegram': typeof ServicesBotsTelegramRoute
@@ -308,6 +355,7 @@ export interface FileRoutesByTo {
   '/services/websites/ecommerce': typeof ServicesWebsitesEcommerceRoute
   '/services/websites/landing': typeof ServicesWebsitesLandingRoute
   '/admin/cases': typeof AdminCasesIndexRoute
+  '/admin/content': typeof AdminContentIndexRoute
   '/services/bots': typeof ServicesBotsIndexRoute
   '/services/websites': typeof ServicesWebsitesIndexRoute
 }
@@ -326,7 +374,6 @@ export interface FileRoutesById {
   '/works': typeof WorksRouteWithChildren
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
-  '/admin/content': typeof AdminContentRoute
   '/admin/login': typeof AdminLoginRoute
   '/api/lead': typeof ApiLeadRoute
   '/api/media': typeof ApiMediaRoute
@@ -341,6 +388,12 @@ export interface FileRoutesById {
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/admin/cases/$slug': typeof AdminCasesSlugRoute
   '/admin/cases/new': typeof AdminCasesNewRoute
+  '/admin/content/contacts': typeof AdminContentContactsRoute
+  '/admin/content/faq': typeof AdminContentFaqRoute
+  '/admin/content/metrics': typeof AdminContentMetricsRoute
+  '/admin/content/packages': typeof AdminContentPackagesRoute
+  '/admin/content/services': typeof AdminContentServicesRoute
+  '/admin/content/texts': typeof AdminContentTextsRoute
   '/services/bots/max': typeof ServicesBotsMaxRoute
   '/services/bots/miniapp': typeof ServicesBotsMiniappRoute
   '/services/bots/telegram': typeof ServicesBotsTelegramRoute
@@ -348,6 +401,7 @@ export interface FileRoutesById {
   '/services/websites/ecommerce': typeof ServicesWebsitesEcommerceRoute
   '/services/websites/landing': typeof ServicesWebsitesLandingRoute
   '/admin/cases/': typeof AdminCasesIndexRoute
+  '/admin/content/': typeof AdminContentIndexRoute
   '/services/bots/': typeof ServicesBotsIndexRoute
   '/services/websites/': typeof ServicesWebsitesIndexRoute
 }
@@ -367,7 +421,6 @@ export interface FileRouteTypes {
     | '/works'
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
-    | '/admin/content'
     | '/admin/login'
     | '/api/lead'
     | '/api/media'
@@ -382,6 +435,12 @@ export interface FileRouteTypes {
     | '/.mcp/invoke-tool/$tool'
     | '/admin/cases/$slug'
     | '/admin/cases/new'
+    | '/admin/content/contacts'
+    | '/admin/content/faq'
+    | '/admin/content/metrics'
+    | '/admin/content/packages'
+    | '/admin/content/services'
+    | '/admin/content/texts'
     | '/services/bots/max'
     | '/services/bots/miniapp'
     | '/services/bots/telegram'
@@ -389,6 +448,7 @@ export interface FileRouteTypes {
     | '/services/websites/ecommerce'
     | '/services/websites/landing'
     | '/admin/cases/'
+    | '/admin/content/'
     | '/services/bots/'
     | '/services/websites/'
   fileRoutesByTo: FileRoutesByTo
@@ -403,7 +463,6 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
-    | '/admin/content'
     | '/admin/login'
     | '/api/lead'
     | '/api/media'
@@ -416,6 +475,12 @@ export interface FileRouteTypes {
     | '/.mcp/invoke-tool/$tool'
     | '/admin/cases/$slug'
     | '/admin/cases/new'
+    | '/admin/content/contacts'
+    | '/admin/content/faq'
+    | '/admin/content/metrics'
+    | '/admin/content/packages'
+    | '/admin/content/services'
+    | '/admin/content/texts'
     | '/services/bots/max'
     | '/services/bots/miniapp'
     | '/services/bots/telegram'
@@ -423,6 +488,7 @@ export interface FileRouteTypes {
     | '/services/websites/ecommerce'
     | '/services/websites/landing'
     | '/admin/cases'
+    | '/admin/content'
     | '/services/bots'
     | '/services/websites'
   id:
@@ -440,7 +506,6 @@ export interface FileRouteTypes {
     | '/works'
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
-    | '/admin/content'
     | '/admin/login'
     | '/api/lead'
     | '/api/media'
@@ -455,6 +520,12 @@ export interface FileRouteTypes {
     | '/.mcp/invoke-tool/$tool'
     | '/admin/cases/$slug'
     | '/admin/cases/new'
+    | '/admin/content/contacts'
+    | '/admin/content/faq'
+    | '/admin/content/metrics'
+    | '/admin/content/packages'
+    | '/admin/content/services'
+    | '/admin/content/texts'
     | '/services/bots/max'
     | '/services/bots/miniapp'
     | '/services/bots/telegram'
@@ -462,6 +533,7 @@ export interface FileRouteTypes {
     | '/services/websites/ecommerce'
     | '/services/websites/landing'
     | '/admin/cases/'
+    | '/admin/content/'
     | '/services/bots/'
     | '/services/websites/'
   fileRoutesById: FileRoutesById
@@ -642,13 +714,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminLoginRouteImport
       parentRoute: typeof AdminRoute
     }
-    '/admin/content': {
-      id: '/admin/content'
-      path: '/content'
-      fullPath: '/admin/content'
-      preLoaderRoute: typeof AdminContentRouteImport
-      parentRoute: typeof AdminRoute
-    }
     '/.well-known/oauth-protected-resource': {
       id: '/.well-known/oauth-protected-resource'
       path: '/.well-known/oauth-protected-resource'
@@ -676,6 +741,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/services/bots/'
       preLoaderRoute: typeof ServicesBotsIndexRouteImport
       parentRoute: typeof ServicesBotsRoute
+    }
+    '/admin/content/': {
+      id: '/admin/content/'
+      path: '/content'
+      fullPath: '/admin/content/'
+      preLoaderRoute: typeof AdminContentIndexRouteImport
+      parentRoute: typeof AdminRoute
     }
     '/admin/cases/': {
       id: '/admin/cases/'
@@ -726,6 +798,48 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ServicesBotsMaxRouteImport
       parentRoute: typeof ServicesBotsRoute
     }
+    '/admin/content/texts': {
+      id: '/admin/content/texts'
+      path: '/content/texts'
+      fullPath: '/admin/content/texts'
+      preLoaderRoute: typeof AdminContentTextsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/content/services': {
+      id: '/admin/content/services'
+      path: '/content/services'
+      fullPath: '/admin/content/services'
+      preLoaderRoute: typeof AdminContentServicesRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/content/packages': {
+      id: '/admin/content/packages'
+      path: '/content/packages'
+      fullPath: '/admin/content/packages'
+      preLoaderRoute: typeof AdminContentPackagesRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/content/metrics': {
+      id: '/admin/content/metrics'
+      path: '/content/metrics'
+      fullPath: '/admin/content/metrics'
+      preLoaderRoute: typeof AdminContentMetricsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/content/faq': {
+      id: '/admin/content/faq'
+      path: '/content/faq'
+      fullPath: '/admin/content/faq'
+      preLoaderRoute: typeof AdminContentFaqRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/content/contacts': {
+      id: '/admin/content/contacts'
+      path: '/content/contacts'
+      fullPath: '/admin/content/contacts'
+      preLoaderRoute: typeof AdminContentContactsRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/cases/new': {
       id: '/admin/cases/new'
       path: '/cases/new'
@@ -751,21 +865,33 @@ declare module '@tanstack/react-router' {
 }
 
 interface AdminRouteChildren {
-  AdminContentRoute: typeof AdminContentRoute
   AdminLoginRoute: typeof AdminLoginRoute
   AdminIndexRoute: typeof AdminIndexRoute
   AdminCasesSlugRoute: typeof AdminCasesSlugRoute
   AdminCasesNewRoute: typeof AdminCasesNewRoute
+  AdminContentContactsRoute: typeof AdminContentContactsRoute
+  AdminContentFaqRoute: typeof AdminContentFaqRoute
+  AdminContentMetricsRoute: typeof AdminContentMetricsRoute
+  AdminContentPackagesRoute: typeof AdminContentPackagesRoute
+  AdminContentServicesRoute: typeof AdminContentServicesRoute
+  AdminContentTextsRoute: typeof AdminContentTextsRoute
   AdminCasesIndexRoute: typeof AdminCasesIndexRoute
+  AdminContentIndexRoute: typeof AdminContentIndexRoute
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
-  AdminContentRoute: AdminContentRoute,
   AdminLoginRoute: AdminLoginRoute,
   AdminIndexRoute: AdminIndexRoute,
   AdminCasesSlugRoute: AdminCasesSlugRoute,
   AdminCasesNewRoute: AdminCasesNewRoute,
+  AdminContentContactsRoute: AdminContentContactsRoute,
+  AdminContentFaqRoute: AdminContentFaqRoute,
+  AdminContentMetricsRoute: AdminContentMetricsRoute,
+  AdminContentPackagesRoute: AdminContentPackagesRoute,
+  AdminContentServicesRoute: AdminContentServicesRoute,
+  AdminContentTextsRoute: AdminContentTextsRoute,
   AdminCasesIndexRoute: AdminCasesIndexRoute,
+  AdminContentIndexRoute: AdminContentIndexRoute,
 }
 
 const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)

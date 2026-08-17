@@ -95,10 +95,15 @@ export const submitLogin = createServerFn({ method: "POST" })
     }
 
     if (result.reason === "not_configured") {
+      const { MIN_PASSWORD_LENGTH } = await import("../server/auth.server");
       return {
         ok: false,
+        /* Длина названа прямо здесь: самая частая причина этого ответа —
+           заданный, но слишком короткий ADMIN_PASSWORD, а увидеть причину
+           в логе сервера владелец догадается не сразу. */
         message:
-          "Пароль ещё не задан. Задайте ADMIN_PASSWORD в окружении сервера и перезапустите его.",
+          `Пароль ещё не задан. Задайте ADMIN_PASSWORD в окружении сервера ` +
+          `(минимум ${MIN_PASSWORD_LENGTH} символов) и перезапустите его.`,
       };
     }
     if (result.reason === "locked") {
