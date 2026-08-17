@@ -4,6 +4,7 @@ import {
   Link,
   createRootRouteWithContext,
   useRouter,
+  useRouterState,
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
@@ -148,6 +149,27 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  const pathname = useRouterState({ select: (state) => state.location.pathname });
+
+  /**
+   * Админка живёт под тем же корнем, но обвязка сайта ей не нужна и мешает:
+   * меню «Услуги · Работы · Пакеты», подвал и кнопка-маскот с репликами
+   * посреди рабочего экрана. У админки своя шапка (см. `admin.tsx`).
+   *
+   * Решение по адресу, а не отдельным корневым макетом: корень задаёт `<html>`,
+   * шрифты, микроразметку и обработчик ошибок — дублировать это ради одной
+   * ветки значило бы поддерживать две копии.
+   */
+  const isAdmin = pathname === "/admin" || pathname.startsWith("/admin/");
+
+  if (isAdmin) {
+    return (
+      <QueryClientProvider client={queryClient}>
+        <Outlet />
+        <Toaster />
+      </QueryClientProvider>
+    );
+  }
 
   return (
     <QueryClientProvider client={queryClient}>

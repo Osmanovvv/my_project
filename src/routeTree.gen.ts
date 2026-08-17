@@ -18,14 +18,17 @@ import { Route as McpRouteImport } from './routes/mcp'
 import { Route as IndustriesRouteImport } from './routes/industries'
 import { Route as FaqRouteImport } from './routes/faq'
 import { Route as ContactsRouteImport } from './routes/contacts'
+import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as WorksIndexRouteImport } from './routes/works.index'
 import { Route as ServicesIndexRouteImport } from './routes/services.index'
+import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as WorksSlugRouteImport } from './routes/works.$slug'
 import { Route as ServicesWebsitesRouteImport } from './routes/services.websites'
 import { Route as ServicesSupportRouteImport } from './routes/services.support'
 import { Route as ServicesBotsRouteImport } from './routes/services.bots'
 import { Route as ApiLeadRouteImport } from './routes/api.lead'
+import { Route as AdminLoginRouteImport } from './routes/admin.login'
 import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
 import { Route as Char91DotmcpChar93ListToolsRouteImport } from './routes/[.mcp]/list-tools'
 import { Route as ServicesWebsitesIndexRouteImport } from './routes/services.websites.index'
@@ -83,6 +86,11 @@ const ContactsRoute = ContactsRouteImport.update({
   path: '/contacts',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminRoute = AdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -97,6 +105,11 @@ const ServicesIndexRoute = ServicesIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => ServicesRoute,
+} as any)
+const AdminIndexRoute = AdminIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AdminRoute,
 } as any)
 const WorksSlugRoute = WorksSlugRouteImport.update({
   id: '/$slug',
@@ -122,6 +135,11 @@ const ApiLeadRoute = ApiLeadRouteImport.update({
   id: '/api/lead',
   path: '/api/lead',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AdminLoginRoute = AdminLoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => AdminRoute,
 } as any)
 const Char91DotwellKnownChar93OauthProtectedResourceRoute =
   Char91DotwellKnownChar93OauthProtectedResourceRouteImport.update({
@@ -186,6 +204,7 @@ const Char91DotmcpChar93InvokeToolToolRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRouteWithChildren
   '/contacts': typeof ContactsRoute
   '/faq': typeof FaqRoute
   '/industries': typeof IndustriesRoute
@@ -197,11 +216,13 @@ export interface FileRoutesByFullPath {
   '/works': typeof WorksRouteWithChildren
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
+  '/admin/login': typeof AdminLoginRoute
   '/api/lead': typeof ApiLeadRoute
   '/services/bots': typeof ServicesBotsRouteWithChildren
   '/services/support': typeof ServicesSupportRoute
   '/services/websites': typeof ServicesWebsitesRouteWithChildren
   '/works/$slug': typeof WorksSlugRoute
+  '/admin/': typeof AdminIndexRoute
   '/services/': typeof ServicesIndexRoute
   '/works/': typeof WorksIndexRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
@@ -225,9 +246,11 @@ export interface FileRoutesByTo {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
+  '/admin/login': typeof AdminLoginRoute
   '/api/lead': typeof ApiLeadRoute
   '/services/support': typeof ServicesSupportRoute
   '/works/$slug': typeof WorksSlugRoute
+  '/admin': typeof AdminIndexRoute
   '/services': typeof ServicesIndexRoute
   '/works': typeof WorksIndexRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
@@ -243,6 +266,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/admin': typeof AdminRouteWithChildren
   '/contacts': typeof ContactsRoute
   '/faq': typeof FaqRoute
   '/industries': typeof IndustriesRoute
@@ -254,11 +278,13 @@ export interface FileRoutesById {
   '/works': typeof WorksRouteWithChildren
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
+  '/admin/login': typeof AdminLoginRoute
   '/api/lead': typeof ApiLeadRoute
   '/services/bots': typeof ServicesBotsRouteWithChildren
   '/services/support': typeof ServicesSupportRoute
   '/services/websites': typeof ServicesWebsitesRouteWithChildren
   '/works/$slug': typeof WorksSlugRoute
+  '/admin/': typeof AdminIndexRoute
   '/services/': typeof ServicesIndexRoute
   '/works/': typeof WorksIndexRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
@@ -275,6 +301,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/admin'
     | '/contacts'
     | '/faq'
     | '/industries'
@@ -286,11 +313,13 @@ export interface FileRouteTypes {
     | '/works'
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
+    | '/admin/login'
     | '/api/lead'
     | '/services/bots'
     | '/services/support'
     | '/services/websites'
     | '/works/$slug'
+    | '/admin/'
     | '/services/'
     | '/works/'
     | '/.mcp/invoke-tool/$tool'
@@ -314,9 +343,11 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
+    | '/admin/login'
     | '/api/lead'
     | '/services/support'
     | '/works/$slug'
+    | '/admin'
     | '/services'
     | '/works'
     | '/.mcp/invoke-tool/$tool'
@@ -331,6 +362,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/admin'
     | '/contacts'
     | '/faq'
     | '/industries'
@@ -342,11 +374,13 @@ export interface FileRouteTypes {
     | '/works'
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
+    | '/admin/login'
     | '/api/lead'
     | '/services/bots'
     | '/services/support'
     | '/services/websites'
     | '/works/$slug'
+    | '/admin/'
     | '/services/'
     | '/works/'
     | '/.mcp/invoke-tool/$tool'
@@ -362,6 +396,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AdminRoute: typeof AdminRouteWithChildren
   ContactsRoute: typeof ContactsRoute
   FaqRoute: typeof FaqRoute
   IndustriesRoute: typeof IndustriesRoute
@@ -442,6 +477,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ContactsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -462,6 +504,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/services/'
       preLoaderRoute: typeof ServicesIndexRouteImport
       parentRoute: typeof ServicesRoute
+    }
+    '/admin/': {
+      id: '/admin/'
+      path: '/'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof AdminIndexRouteImport
+      parentRoute: typeof AdminRoute
     }
     '/works/$slug': {
       id: '/works/$slug'
@@ -497,6 +546,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/api/lead'
       preLoaderRoute: typeof ApiLeadRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/admin/login': {
+      id: '/admin/login'
+      path: '/login'
+      fullPath: '/admin/login'
+      preLoaderRoute: typeof AdminLoginRouteImport
+      parentRoute: typeof AdminRoute
     }
     '/.well-known/oauth-protected-resource': {
       id: '/.well-known/oauth-protected-resource'
@@ -578,6 +634,18 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AdminRouteChildren {
+  AdminLoginRoute: typeof AdminLoginRoute
+  AdminIndexRoute: typeof AdminIndexRoute
+}
+
+const AdminRouteChildren: AdminRouteChildren = {
+  AdminLoginRoute: AdminLoginRoute,
+  AdminIndexRoute: AdminIndexRoute,
+}
+
+const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
+
 interface ServicesBotsRouteChildren {
   ServicesBotsMaxRoute: typeof ServicesBotsMaxRoute
   ServicesBotsMiniappRoute: typeof ServicesBotsMiniappRoute
@@ -645,6 +713,7 @@ const WorksRouteWithChildren = WorksRoute._addFileChildren(WorksRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AdminRoute: AdminRouteWithChildren,
   ContactsRoute: ContactsRoute,
   FaqRoute: FaqRoute,
   IndustriesRoute: IndustriesRoute,

@@ -153,7 +153,13 @@ export function ContactSection({ compact = false, id }: Props) {
           </ul>
         </div>
 
+        {/* method="post" обязателен. Форма отправляется через fetch, но если
+            JavaScript не загрузился, браузер отправит её сам — а по умолчанию
+            это GET, то есть имя, телефон и текст задачи уедут в строку адреса
+            и осядут в истории браузера, логах сервера и заголовке Referer.
+            Это контактные данные клиента, им там не место. */}
         <form
+          method="post"
           onSubmit={onSubmit}
           noValidate
           className="relative rounded-2xl border border-border bg-surface p-6 sm:p-8 space-y-5"

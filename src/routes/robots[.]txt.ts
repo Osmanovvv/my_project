@@ -10,8 +10,12 @@ import { originFromRequest } from "../lib/site-urls";
  * совпадать с доменом, на котором сайт реально открыли (превью Lovable,
  * свой домен, локалхост).
  *
- * Служебные разделы закрыты: `/api/*` — приём заявок, `/mcp`, `/.mcp/*`
- * и `/.well-known/*` — MCP-сервер. Индексировать их незачем.
+ * Служебные разделы закрыты: `/admin*` — админка, `/api/*` — приём заявок,
+ * `/mcp`, `/.mcp/*` и `/.well-known/*` — MCP-сервер. Индексировать их незачем.
+ *
+ * Запрет обхода админки — не единственная мера и не главная: строка в robots
+ * лишь просит роботов не ходить, а на страницах админки стоит ещё и
+ * `noindex, nofollow`. Настоящая защита — пароль, всё остальное косметика.
  */
 function handleRobots({ request }: { request: Request }): Response {
   const origin = originFromRequest(request, SITE_URL);
@@ -19,6 +23,7 @@ function handleRobots({ request }: { request: Request }): Response {
   const body = [
     "User-agent: *",
     "Allow: /",
+    "Disallow: /admin",
     "Disallow: /api/",
     "Disallow: /mcp",
     "Disallow: /.mcp/",
@@ -26,6 +31,7 @@ function handleRobots({ request }: { request: Request }): Response {
     "",
     "User-agent: Yandex",
     "Allow: /",
+    "Disallow: /admin",
     "Disallow: /api/",
     "Disallow: /mcp",
     "Disallow: /.mcp/",
