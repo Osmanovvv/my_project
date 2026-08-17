@@ -33,12 +33,15 @@ import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } fr
 import { Route as Char91DotmcpChar93ListToolsRouteImport } from './routes/[.mcp]/list-tools'
 import { Route as ServicesWebsitesIndexRouteImport } from './routes/services.websites.index'
 import { Route as ServicesBotsIndexRouteImport } from './routes/services.bots.index'
+import { Route as AdminCasesIndexRouteImport } from './routes/admin.cases.index'
 import { Route as ServicesWebsitesLandingRouteImport } from './routes/services.websites.landing'
 import { Route as ServicesWebsitesEcommerceRouteImport } from './routes/services.websites.ecommerce'
 import { Route as ServicesWebsitesCorporateRouteImport } from './routes/services.websites.corporate'
 import { Route as ServicesBotsTelegramRouteImport } from './routes/services.bots.telegram'
 import { Route as ServicesBotsMiniappRouteImport } from './routes/services.bots.miniapp'
 import { Route as ServicesBotsMaxRouteImport } from './routes/services.bots.max'
+import { Route as AdminCasesNewRouteImport } from './routes/admin.cases.new'
+import { Route as AdminCasesSlugRouteImport } from './routes/admin.cases.$slug'
 import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
 
 const WorksRoute = WorksRouteImport.update({
@@ -163,6 +166,11 @@ const ServicesBotsIndexRoute = ServicesBotsIndexRouteImport.update({
   path: '/',
   getParentRoute: () => ServicesBotsRoute,
 } as any)
+const AdminCasesIndexRoute = AdminCasesIndexRouteImport.update({
+  id: '/cases/',
+  path: '/cases/',
+  getParentRoute: () => AdminRoute,
+} as any)
 const ServicesWebsitesLandingRoute = ServicesWebsitesLandingRouteImport.update({
   id: '/landing',
   path: '/landing',
@@ -195,6 +203,16 @@ const ServicesBotsMaxRoute = ServicesBotsMaxRouteImport.update({
   path: '/max',
   getParentRoute: () => ServicesBotsRoute,
 } as any)
+const AdminCasesNewRoute = AdminCasesNewRouteImport.update({
+  id: '/cases/new',
+  path: '/cases/new',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminCasesSlugRoute = AdminCasesSlugRouteImport.update({
+  id: '/cases/$slug',
+  path: '/cases/$slug',
+  getParentRoute: () => AdminRoute,
+} as any)
 const Char91DotmcpChar93InvokeToolToolRoute =
   Char91DotmcpChar93InvokeToolToolRouteImport.update({
     id: '/.mcp/invoke-tool/$tool',
@@ -226,12 +244,15 @@ export interface FileRoutesByFullPath {
   '/services/': typeof ServicesIndexRoute
   '/works/': typeof WorksIndexRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
+  '/admin/cases/$slug': typeof AdminCasesSlugRoute
+  '/admin/cases/new': typeof AdminCasesNewRoute
   '/services/bots/max': typeof ServicesBotsMaxRoute
   '/services/bots/miniapp': typeof ServicesBotsMiniappRoute
   '/services/bots/telegram': typeof ServicesBotsTelegramRoute
   '/services/websites/corporate': typeof ServicesWebsitesCorporateRoute
   '/services/websites/ecommerce': typeof ServicesWebsitesEcommerceRoute
   '/services/websites/landing': typeof ServicesWebsitesLandingRoute
+  '/admin/cases/': typeof AdminCasesIndexRoute
   '/services/bots/': typeof ServicesBotsIndexRoute
   '/services/websites/': typeof ServicesWebsitesIndexRoute
 }
@@ -254,12 +275,15 @@ export interface FileRoutesByTo {
   '/services': typeof ServicesIndexRoute
   '/works': typeof WorksIndexRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
+  '/admin/cases/$slug': typeof AdminCasesSlugRoute
+  '/admin/cases/new': typeof AdminCasesNewRoute
   '/services/bots/max': typeof ServicesBotsMaxRoute
   '/services/bots/miniapp': typeof ServicesBotsMiniappRoute
   '/services/bots/telegram': typeof ServicesBotsTelegramRoute
   '/services/websites/corporate': typeof ServicesWebsitesCorporateRoute
   '/services/websites/ecommerce': typeof ServicesWebsitesEcommerceRoute
   '/services/websites/landing': typeof ServicesWebsitesLandingRoute
+  '/admin/cases': typeof AdminCasesIndexRoute
   '/services/bots': typeof ServicesBotsIndexRoute
   '/services/websites': typeof ServicesWebsitesIndexRoute
 }
@@ -288,12 +312,15 @@ export interface FileRoutesById {
   '/services/': typeof ServicesIndexRoute
   '/works/': typeof WorksIndexRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
+  '/admin/cases/$slug': typeof AdminCasesSlugRoute
+  '/admin/cases/new': typeof AdminCasesNewRoute
   '/services/bots/max': typeof ServicesBotsMaxRoute
   '/services/bots/miniapp': typeof ServicesBotsMiniappRoute
   '/services/bots/telegram': typeof ServicesBotsTelegramRoute
   '/services/websites/corporate': typeof ServicesWebsitesCorporateRoute
   '/services/websites/ecommerce': typeof ServicesWebsitesEcommerceRoute
   '/services/websites/landing': typeof ServicesWebsitesLandingRoute
+  '/admin/cases/': typeof AdminCasesIndexRoute
   '/services/bots/': typeof ServicesBotsIndexRoute
   '/services/websites/': typeof ServicesWebsitesIndexRoute
 }
@@ -323,12 +350,15 @@ export interface FileRouteTypes {
     | '/services/'
     | '/works/'
     | '/.mcp/invoke-tool/$tool'
+    | '/admin/cases/$slug'
+    | '/admin/cases/new'
     | '/services/bots/max'
     | '/services/bots/miniapp'
     | '/services/bots/telegram'
     | '/services/websites/corporate'
     | '/services/websites/ecommerce'
     | '/services/websites/landing'
+    | '/admin/cases/'
     | '/services/bots/'
     | '/services/websites/'
   fileRoutesByTo: FileRoutesByTo
@@ -351,12 +381,15 @@ export interface FileRouteTypes {
     | '/services'
     | '/works'
     | '/.mcp/invoke-tool/$tool'
+    | '/admin/cases/$slug'
+    | '/admin/cases/new'
     | '/services/bots/max'
     | '/services/bots/miniapp'
     | '/services/bots/telegram'
     | '/services/websites/corporate'
     | '/services/websites/ecommerce'
     | '/services/websites/landing'
+    | '/admin/cases'
     | '/services/bots'
     | '/services/websites'
   id:
@@ -384,12 +417,15 @@ export interface FileRouteTypes {
     | '/services/'
     | '/works/'
     | '/.mcp/invoke-tool/$tool'
+    | '/admin/cases/$slug'
+    | '/admin/cases/new'
     | '/services/bots/max'
     | '/services/bots/miniapp'
     | '/services/bots/telegram'
     | '/services/websites/corporate'
     | '/services/websites/ecommerce'
     | '/services/websites/landing'
+    | '/admin/cases/'
     | '/services/bots/'
     | '/services/websites/'
   fileRoutesById: FileRoutesById
@@ -582,6 +618,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ServicesBotsIndexRouteImport
       parentRoute: typeof ServicesBotsRoute
     }
+    '/admin/cases/': {
+      id: '/admin/cases/'
+      path: '/cases'
+      fullPath: '/admin/cases/'
+      preLoaderRoute: typeof AdminCasesIndexRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/services/websites/landing': {
       id: '/services/websites/landing'
       path: '/landing'
@@ -624,6 +667,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ServicesBotsMaxRouteImport
       parentRoute: typeof ServicesBotsRoute
     }
+    '/admin/cases/new': {
+      id: '/admin/cases/new'
+      path: '/cases/new'
+      fullPath: '/admin/cases/new'
+      preLoaderRoute: typeof AdminCasesNewRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/cases/$slug': {
+      id: '/admin/cases/$slug'
+      path: '/cases/$slug'
+      fullPath: '/admin/cases/$slug'
+      preLoaderRoute: typeof AdminCasesSlugRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/.mcp/invoke-tool/$tool': {
       id: '/.mcp/invoke-tool/$tool'
       path: '/.mcp/invoke-tool/$tool'
@@ -637,11 +694,17 @@ declare module '@tanstack/react-router' {
 interface AdminRouteChildren {
   AdminLoginRoute: typeof AdminLoginRoute
   AdminIndexRoute: typeof AdminIndexRoute
+  AdminCasesSlugRoute: typeof AdminCasesSlugRoute
+  AdminCasesNewRoute: typeof AdminCasesNewRoute
+  AdminCasesIndexRoute: typeof AdminCasesIndexRoute
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
   AdminLoginRoute: AdminLoginRoute,
   AdminIndexRoute: AdminIndexRoute,
+  AdminCasesSlugRoute: AdminCasesSlugRoute,
+  AdminCasesNewRoute: AdminCasesNewRoute,
+  AdminCasesIndexRoute: AdminCasesIndexRoute,
 }
 
 const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)

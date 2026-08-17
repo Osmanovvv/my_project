@@ -189,3 +189,149 @@ export const removeLead = createServerFn({ method: "POST" })
     deleteLead(data.id);
     return { ok: true as const };
   });
+
+// ──────────────────────────────────────────────────────────── кейсы ─────────
+
+/**
+ * Приведение кейса из формы к тому, что можно положить в базу.
+ *
+ * Проверка идёт здесь, а не только в интерфейсе: серверную функцию можно
+ * позвать напрямую. Списки чистятся от пустых строк — иначе пустой пункт,
+ * оставленный в форме, уехал бы на сайт пустым маркером.
+ */
+function normalizeCaseInput(raw: Record<string, unknown>) {
+  const text = (value: unknown, limit = 300): string =>
+    typeof value === "string" ? value.replace(/\s+/g, " ").trim().slice(0, limit) : "";
+
+  const multiline = (value: unknown, limit = 2000): string =>
+    typeof value === "string"
+      ? value
+          .replace(/\r\n/g, "\n")
+          .replace(/[^\S\n]+/g, " ")
+          .replace(/\n{3,}/g, "\n\n")
+          .trim()
+          .slice(0, limit)
+      : "";
+
+  const list = (value: unknown, limit = 20): string[] =>
+    Array.isArray(value)
+      ? value
+          .map((item) => text(item, 300))
+          .filter(Boolean)
+          .slice(0, limit)
+      : [];
+
+  return {
+    slug: text(raw.slug, 60),
+    title: text(raw.title, 120),
+    client: text(raw.client, 120),
+    industry: text(raw.industry, 120),
+    result: text(raw.result, 200),
+    summary: multiline(raw.summary, 800),
+    timeline: text(raw.timeline, 60),
+    gradient: text(raw.gradient, 20),
+    pattern: text(raw.pattern, 20),
+    tags: list(raw.tags, 4),
+    challenge: list(raw.challenge),
+    solution: list(raw.solution),
+    delivered: list(raw.delivered),
+    stack: list(raw.stack),
+    services: list(raw.services, 7),
+    published: raw.published === true,
+  };
+}
+
+type CasePayload = ReturnType<typeof normalizeCaseInput>;
+
+/** Приводит проверенные значения к типам домена. */
+async function toCaseInput(payload: CasePayload) {
+  const { isGradientKey, isPattern } = await import("../data/case-presets");
+  const { TAG_ORDER } = await import("../data/cases");
+  const { SERVICE_IDS } = await import("../data/services");
+
+  return {
+    ...payload,
+    gradient: isGradientKey(payload.gradient) ? payload.gradient : ("indigo" as const),
+    pattern: isPattern(payload.pattern) ? payload.pattern : ("grid" as const),
+    tags: payload.tags.filter((tag) => (TAG_ORDER as string[]).includes(tag)) as Array<
+      (typeof TAG_ORDER)[number]
+    >,
+    services: payload.services.filter((id) =>
+      (SERVICE_IDS as readonly string[]).includes(id),
+    ) as Array<(typeof SERVICE_IDS)[number]>,
+  };
+}
+
+/** Список кейсов для админки — вместе с черновиками. */
+export const fetchAdminCases = createServerFn({ method: "GET" }).handler(async () => {
+  await assertAuth();
+  const { allCases } = await import("../server/cases.server");
+  return allCases();
+});
+
+/** Один кейс для формы; черновик тоже отдаётся. */
+export const fetchAdminCase = createServerFn({ method: "GET" })
+  .validator((data: { slug: string }) => ({ slug: String(data?.slug ?? "") }))
+  .handler(async ({ data }) => {
+    await assertAuth();
+    const { caseBySlug } = await import("../server/cases.server");
+    return caseBySlug(data.slug, true) ?? null;
+  });
+
+export const createCaseEntry = createServerFn({ method: "POST" })
+  .validator((data: Record<string, unknown>) => normalizeCaseInput(data ?? {}))
+  .handler(async ({ data }) => {
+    await assertAuth();
+    assertSameOrigin();
+    const { createCase } = await import("../server/cases.server");
+    const slug = createCase(await toCaseInput(data));
+    return { ok: true as const, slug };
+  });
+
+export const updateCaseEntry = createServerFn({ method: "POST" })
+  .validator((data: Record<string, unknown>) => ({
+    slug: String(data?.slug ?? ""),
+    input: normalizeCaseInput((data?.input as Record<string, unknown>) ?? {}),
+  }))
+  .handler(async ({ data }) => {
+    await assertAuth();
+    assertSameOrigin();
+    const { updateCase } = await import("../server/cases.server");
+    updateCase(data.slug, await toCaseInput(data.input));
+    return { ok: true as const };
+  });
+
+export const removeCaseEntry = createServerFn({ method: "POST" })
+  .validator((data: { slug: string }) => ({ slug: String(data?.slug ?? "") }))
+  .handler(async ({ data }) => {
+    await assertAuth();
+    assertSameOrigin();
+    const { deleteCase } = await import("../server/cases.server");
+    deleteCase(data.slug);
+    return { ok: true as const };
+  });
+
+export const publishCaseEntry = createServerFn({ method: "POST" })
+  .validator((data: { slug: string; published: boolean }) => ({
+    slug: String(data?.slug ?? ""),
+    published: data?.published === true,
+  }))
+  .handler(async ({ data }) => {
+    await assertAuth();
+    assertSameOrigin();
+    const { setPublished } = await import("../server/cases.server");
+    setPublished(data.slug, data.published);
+    return { ok: true as const };
+  });
+
+export const reorderCaseEntries = createServerFn({ method: "POST" })
+  .validator((data: { slugs: string[] }) => ({
+    slugs: Array.isArray(data?.slugs) ? data.slugs.map(String).slice(0, 200) : [],
+  }))
+  .handler(async ({ data }) => {
+    await assertAuth();
+    assertSameOrigin();
+    const { reorderCases } = await import("../server/cases.server");
+    reorderCases(data.slugs);
+    return { ok: true as const };
+  });

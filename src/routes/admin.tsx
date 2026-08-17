@@ -1,5 +1,5 @@
 import { createFileRoute, redirect, Link, Outlet, useRouter } from "@tanstack/react-router";
-import { LogOut, Inbox } from "lucide-react";
+import { FolderOpen, Inbox, LogOut } from "lucide-react";
 
 import { getAuthState, submitLogout } from "../lib/admin.rpc";
 
@@ -93,10 +93,17 @@ function AdminHeader() {
           <Link
             to="/admin"
             activeOptions={{ exact: true }}
-            className="inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm text-muted-foreground transition hover:bg-muted hover:text-foreground [&.active]:bg-accent-soft [&.active]:text-accent"
+            className="inline-flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-sm text-muted-foreground transition hover:bg-muted hover:text-foreground sm:px-3 [&.active]:bg-accent-soft [&.active]:text-accent"
           >
             <Inbox className="h-4 w-4" />
             Заявки
+          </Link>
+          <Link
+            to="/admin/cases"
+            className="inline-flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-sm text-muted-foreground transition hover:bg-muted hover:text-foreground sm:px-3 [&.active]:bg-accent-soft [&.active]:text-accent"
+          >
+            <FolderOpen className="h-4 w-4" />
+            Кейсы
           </Link>
         </nav>
 
