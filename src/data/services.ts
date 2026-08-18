@@ -297,7 +297,7 @@ export const PACKAGE_SEEDS: PackageSeed[] = [
     name: "Бизнес",
     who: "Основной выбор для работающих компаний",
     /* Части: корпоративный 120 + бот 30 = 150 тыс. */
-    priceValue: 135_000,
+    priceValue: 130_000,
     featured: true,
     points: [
       "Сайт из нескольких страниц",
