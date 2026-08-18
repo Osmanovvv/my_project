@@ -589,6 +589,28 @@ export const saveSupportTariffs = createServerFn({ method: "POST" })
     return { ok: true as const };
   });
 
+/**
+ * Снимок в макете первого экрана. `mediaId: 0` возвращает картинку из кода.
+ *
+ * Отдельно от текстов, хотя лежит в той же таблице: там значение — строка
+ * для показа, здесь номер записи в media, и проверять их надо по-разному.
+ */
+export const saveImageForSlot = createServerFn({ method: "POST" })
+  .validator((data: { slot: string; mediaId: number }) => ({
+    slot: line(data?.slot, 60),
+    mediaId: Math.max(0, Math.round(Number(data?.mediaId) || 0)),
+  }))
+  .handler(async ({ data }) => {
+    await assertAuth();
+    assertSameOrigin();
+    const { saveImageSlot } = await import("../server/content.server");
+    const { isImageSlot } = await import("../data/texts");
+
+    if (!isImageSlot(data.slot)) throw new Error("bad_slot");
+    saveImageSlot(data.slot, data.mediaId || null);
+    return { ok: true as const };
+  });
+
 export const saveSiteTexts = createServerFn({ method: "POST" })
   .validator((data: { items?: unknown[] }) => ({
     items: Array.isArray(data?.items) ? data.items : [],

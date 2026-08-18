@@ -1,7 +1,24 @@
 import type { ReactNode } from "react";
+import { useLoaderData } from "@tanstack/react-router";
 import { CheckCheck, EllipsisVertical, Inbox, Menu, Paperclip, Send } from "lucide-react";
 
 import { Mascot } from "./Mascot";
+
+/**
+ * Содержимое рамок — из снимка контента.
+ *
+ * Раньше здесь стояли снимок «Кирпичных домов», его адрес и диалог про метраж
+ * дома — прямо литералами. Показывать один и тот же проект вечно нельзя:
+ * сдав следующего клиента, владелец захочет поставить в первый экран его,
+ * и до этой правки для такого требовался разработчик.
+ *
+ * Хук отдельной функцией, потому что рамки — три независимых компонента,
+ * и каждая берёт свой кусок.
+ */
+function useShowcase() {
+  const { texts, images } = useLoaderData({ from: "__root__" });
+  return { texts, images };
+}
 
 /**
  * Макеты продукта в герое: окно сайта, чат бота и MiniApp.
@@ -32,6 +49,9 @@ const SCENE = "8s linear infinite both";
  * заход накрывает её первой.
  */
 export function BrowserCard({ captionAlign = "left" }: { captionAlign?: "left" | "right" }) {
+  const { texts, images } = useShowcase();
+  const shot = images["home.hero.browser.image"];
+
   return (
     <div className="overflow-hidden rounded-2xl border border-frame-edge bg-frame shadow-2xl shadow-black/25">
       {/* Волосяная линия под шапкой обязательна: без неё тёмный корпус
@@ -41,7 +61,7 @@ export function BrowserCard({ captionAlign = "left" }: { captionAlign?: "left" |
         <span className="h-2.5 w-2.5 rounded-full bg-white/18" />
         <span className="h-2.5 w-2.5 rounded-full bg-white/12" />
         <span className="ml-3 truncate font-mono text-[11px] text-frame-muted">
-          stroitelstvo-domov2.netlify.app
+          {texts["home.hero.browser.url"]}
         </span>
       </div>
       {/* 16/10 — родная пропорция снимка, кадр показан целиком. Была 4/3
@@ -50,10 +70,10 @@ export function BrowserCard({ captionAlign = "left" }: { captionAlign?: "left" |
           его ради чужой пропорции неправильно. */}
       <div className="relative aspect-[16/10] bg-frame">
         <img
-          src="/works/bricks-desktop.webp"
-          width={880}
-          height={550}
-          alt="Сайт «Кирпичные дома», Краснодар — работа IT-Agent"
+          src={shot.url}
+          width={shot.width}
+          height={shot.height}
+          alt={texts["home.hero.browser.alt"]}
           loading="eager"
           decoding="async"
           fetchPriority="high"
@@ -67,8 +87,10 @@ export function BrowserCard({ captionAlign = "left" }: { captionAlign?: "left" |
             captionAlign === "right" ? "right-5 text-right" : "left-5"
           }`}
         >
-          <div className="font-display text-lg text-white sm:text-xl">Кирпичные дома</div>
-          <div className="text-xs text-white/70">Краснодар · сайт опубликован</div>
+          <div className="font-display text-lg text-white sm:text-xl">
+            {texts["home.hero.browser.title"]}
+          </div>
+          <div className="text-xs text-white/70">{texts["home.hero.browser.note"]}</div>
         </div>
       </div>
     </div>
@@ -93,13 +115,16 @@ export function BrowserCard({ captionAlign = "left" }: { captionAlign?: "left" |
  * подпись попадает ровно в зону перекрытия и обрезается на полуслове.
  */
 export function MiniAppCard({ caption = true }: { caption?: boolean }) {
+  const { texts, images } = useShowcase();
+  const shot = images["home.hero.phone.image"];
+
   return (
     <div className="relative aspect-[9/16] overflow-hidden rounded-2xl border border-frame-edge bg-frame shadow-2xl shadow-black/25">
       <img
-        src="/works/bricks-mobile.webp"
-        width={420}
-        height={747}
-        alt="Мобильная версия сайта «Кирпичные дома»"
+        src={shot.url}
+        width={shot.width}
+        height={shot.height}
+        alt={texts["home.hero.phone.alt"]}
         loading="lazy"
         decoding="async"
         className="absolute inset-0 h-full w-full object-cover"
@@ -111,8 +136,10 @@ export function MiniAppCard({ caption = true }: { caption?: boolean }) {
         <>
           <div className="absolute inset-x-0 bottom-0 hidden h-2/5 bg-gradient-to-t from-black/85 via-black/45 to-transparent xl:block" />
           <div className="absolute bottom-3 left-3 right-3 hidden xl:block">
-            <div className="font-display text-sm leading-tight text-white">Кирпичные дома</div>
-            <div className="text-[11px] text-white/70">адаптив под телефон</div>
+            <div className="font-display text-sm leading-tight text-white">
+              {texts["home.hero.phone.title"]}
+            </div>
+            <div className="text-[11px] text-white/70">{texts["home.hero.phone.note"]}</div>
           </div>
         </>
       )}
@@ -165,6 +192,8 @@ function Bubble({
 }
 
 export function ChatCard() {
+  const { texts } = useShowcase();
+
   return (
     // Внешний слой без `overflow-hidden`: бейдж заявки торчит за край окна.
     <div className="relative">
@@ -174,7 +203,7 @@ export function ChatCard() {
         style={{ animation: `lead-badge ${SCENE}` }}
       >
         <span className="h-1.5 w-1.5 rounded-full bg-accent-foreground" />
-        Новая заявка
+        {texts["home.hero.chat.badge"]}
       </span>
 
       <div className="overflow-hidden rounded-2xl border border-frame-edge bg-frame shadow-2xl shadow-black/25">
@@ -188,7 +217,9 @@ export function ChatCard() {
             <Mascot size="sm" decorative glow={false} className="h-[41px] w-auto object-contain" />
           </span>
           <div className="min-w-0">
-            <div className="truncate text-[13px] font-medium text-white">IT-Agent</div>
+            <div className="truncate text-[13px] font-medium text-white">
+              {texts["home.hero.chat.name"]}
+            </div>
             {/* Обе строки статуса в одной ячейке грида — см. `lead-status`. */}
             <div className="grid text-[11px] leading-tight">
               <span
@@ -221,23 +252,23 @@ export function ChatCard() {
               краснодарским застройщиком на скриншотах, ни с тем, что мы
               продаём (бот, который доводит заявку, а не записывает адрес). */}
           <Bubble time="12:04" className="w-fit max-w-[88%]">
-            Здравствуйте! Какой метраж рассматриваете?
+            {texts["home.hero.chat.msg1"]}
           </Bubble>
 
           <Bubble time="12:04" out read className="ml-auto w-fit max-w-[88%]">
-            120 м², одноэтажный
+            {texts["home.hero.chat.msg2"]}
           </Bubble>
 
           <div className="max-w-[92%]">
-            <Bubble time="12:05">Подобрал 4 проекта. Куда отправить смету?</Bubble>
+            <Bubble time="12:05">{texts["home.hero.chat.msg3"]}</Bubble>
             {/* Инлайн-клавиатура — то, по чему бот в Telegram узнаётся мгновенно.
                 Кнопки декоративные, поэтому не `button`: фокусировать нечего. */}
             <div className="mt-1 grid grid-cols-1 gap-1 sm:grid-cols-2">
               <span className="rounded-lg bg-white/10 px-2 py-1 text-center text-[10px] text-tg-accent">
-                В Telegram
+                {texts["home.hero.chat.button1"]}
               </span>
               <span className="rounded-lg bg-white/10 px-2 py-1 text-center text-[10px] text-tg-accent">
-                На почту
+                {texts["home.hero.chat.button2"]}
               </span>
             </div>
           </div>

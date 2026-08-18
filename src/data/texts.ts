@@ -8,15 +8,15 @@
  *   2. Новый ключ не требует миграции: добавили строку сюда, и всё.
  *   3. Кнопка «вернуть как было» — это просто удаление строки из базы.
  *
- * ЧТО ЗДЕСЬ ЕСТЬ, А ЧЕГО НЕТ. Сначала сюда попал только первый экран главной,
- * с оговоркой «заголовков по сайту сотни, всё не осилить». Владелец на это
- * и пожаловался: редактируется скудно. Теперь здесь весь продающий текст,
- * который живёт вне каталога услуг: главная целиком, блок заявки (он на
- * каждой странице) и шапки внутренних страниц.
+ * ЭТО КАТАЛОГ СТРОК, А НЕ ПОРЯДОК ИХ ПОКАЗА. Как строки собираются в куски
+ * страницы — первый экран, блок заявки, карточки ниш — описано отдельно,
+ * в `data/sections.ts`. Разделение появилось по замечанию владельца: править
+ * он хочет «первый экран целиком», вместе со снимками в рамках, а не список
+ * текстов, отсортированный по тому, где они живут в коде.
  *
- * Чего по-прежнему НЕТ — и намеренно:
- *   - навигация и подвал: меняются раз в жизни, зато ломают вёрстку
- *     длинной строкой быстрее всего;
+ * Чего здесь НЕТ — и намеренно:
+ *   - навигация: меняется раз в жизни, зато ломает вёрстку длинной строкой
+ *     быстрее всего;
  *   - подписи полей формы («Имя», «Telegram или телефон») — они завязаны
  *     на проверку ввода и сообщения об ошибках;
  *   - тексты страниц услуг: у них своя структура со списками и иконками,
@@ -38,6 +38,30 @@ export const TEXT_DEFAULTS = {
   "home.hero.subtitle": "Единая система: сайт, бот в Telegram и админка работают вместе.",
   "home.hero.primaryCta": "Получить разбор",
   "home.hero.secondaryCta": "Как это работает",
+
+  // ── Главная: макеты справа от заголовка ────────────────────────────────
+  // Три рамки — окно браузера, телефон и чат бота — показывают конкретный
+  // проект. Это самая ценная часть первого экрана и первое, что владелец
+  // захочет поменять, когда сдаст следующего клиента: показывать «Кирпичные
+  // дома» вечно нельзя.
+  //
+  // Время в репликах (12:04) остаётся в коде: это декорация, а не смысл.
+  "home.hero.browser.url": "stroitelstvo-domov2.netlify.app",
+  "home.hero.browser.title": "Кирпичные дома",
+  "home.hero.browser.note": "Краснодар · сайт опубликован",
+  "home.hero.browser.alt": "Сайт «Кирпичные дома», Краснодар — работа IT-Agent",
+
+  "home.hero.phone.title": "Кирпичные дома",
+  "home.hero.phone.note": "адаптив под телефон",
+  "home.hero.phone.alt": "Мобильная версия сайта «Кирпичные дома»",
+
+  "home.hero.chat.name": "IT-Agent",
+  "home.hero.chat.badge": "Новая заявка",
+  "home.hero.chat.msg1": "Здравствуйте! Какой метраж рассматриваете?",
+  "home.hero.chat.msg2": "120 м², одноэтажный",
+  "home.hero.chat.msg3": "Подобрал 4 проекта. Куда отправить смету?",
+  "home.hero.chat.button1": "В Telegram",
+  "home.hero.chat.button2": "На почту",
 
   // ── Главная: работы ────────────────────────────────────────────────────
   "home.works.eyebrow": "Работы",
@@ -182,6 +206,23 @@ export const TEXT_LABELS: Record<TextKey, string> = {
   "home.hero.subtitle": "Подзаголовок",
   "home.hero.primaryCta": "Главная кнопка",
   "home.hero.secondaryCta": "Вторая кнопка",
+
+  "home.hero.browser.url": "Адрес в строке браузера",
+  "home.hero.browser.title": "Подпись на снимке",
+  "home.hero.browser.note": "Вторая строка подписи",
+  "home.hero.browser.alt": "Описание снимка для поиска",
+
+  "home.hero.phone.title": "Подпись на снимке",
+  "home.hero.phone.note": "Вторая строка подписи",
+  "home.hero.phone.alt": "Описание снимка для поиска",
+
+  "home.hero.chat.name": "Имя бота в чате",
+  "home.hero.chat.badge": "Всплывающая плашка",
+  "home.hero.chat.msg1": "Сообщение бота",
+  "home.hero.chat.msg2": "Ответ клиента",
+  "home.hero.chat.msg3": "Второе сообщение бота",
+  "home.hero.chat.button1": "Кнопка в чате — левая",
+  "home.hero.chat.button2": "Кнопка в чате — правая",
 
   "home.works.eyebrow": "Надзаголовок",
   "home.works.title": "Заголовок",
@@ -347,164 +388,48 @@ export const TEXT_LIMITS: Partial<Record<TextKey, number>> = {
   "page.industries.title": 45,
 };
 
-/**
- * Группировка для формы. Не косметика: полсотни полей одним списком —
- * это ровно то, на что владелец уже жаловался. Каждая группа открывается
- * отдельно, в свёрнутом виде показано, сколько строк изменено.
- *
- * `note` объясняет, ГДЕ на сайте искать эти строки: по одному названию
- * группы это не всегда очевидно.
- */
-export const TEXT_GROUPS: Array<{ title: string; note: string; keys: TextKey[] }> = [
-  {
-    title: "Главная — первый экран",
-    note: "То, что видно сразу при заходе на сайт",
-    keys: [
-      "home.hero.eyebrow",
-      "home.hero.title",
-      "home.hero.subtitle",
-      "home.hero.primaryCta",
-      "home.hero.secondaryCta",
-    ],
-  },
-  {
-    title: "Главная — блок работ",
-    note: "Виден, только когда заведён хотя бы один кейс",
-    keys: ["home.works.eyebrow", "home.works.title", "home.works.note", "home.works.cta"],
-  },
-  {
-    title: "Главная — как работаем",
-    note: "Четыре шага от разбора до развития",
-    keys: [
-      "home.process.eyebrow",
-      "home.process.title",
-      "home.process.step1.title",
-      "home.process.step1.text",
-      "home.process.step2.title",
-      "home.process.step2.text",
-      "home.process.step3.title",
-      "home.process.step3.text",
-      "home.process.step4.title",
-      "home.process.step4.text",
-    ],
-  },
-  {
-    title: "Главная — пакеты, цифры, вопросы",
-    note: "Заголовки блоков; сами тарифы, плитки и вопросы правятся в своих разделах",
-    keys: [
-      "home.packages.eyebrow",
-      "home.packages.title",
-      "home.packages.note",
-      "home.metrics.eyebrow",
-      "home.metrics.title",
-      "home.faq.eyebrow",
-      "home.faq.title",
-      "home.faq.note",
-    ],
-  },
-  {
-    title: "Кнопки по всему сайту",
-    note: "Каждая строка меняется сразу везде, где стоит эта кнопка",
-    keys: ["cta.primary", "cta.works", "cta.package", "cta.discuss"],
-  },
-  {
-    title: "Блок-призыв на страницах услуг",
-    note: "Стоит внизу каждой из семи страниц услуг",
-    keys: ["service.cta.title", "service.cta.lead"],
-  },
-  {
-    title: "Блок заявки",
-    note: "Стоит внизу почти каждой страницы — правится один раз для всего сайта",
-    keys: [
-      "contact.eyebrow",
-      "contact.title",
-      "contact.lead",
-      "contact.point1",
-      "contact.point2",
-      "contact.point3",
-      "contact.taskPlaceholder",
-      "contact.submit",
-      "contact.success",
-      "contact.consent",
-    ],
-  },
-  {
-    title: "Шапка страницы «Услуги»",
-    note: "/services",
-    keys: ["page.services.eyebrow", "page.services.title", "page.services.lead"],
-  },
-  {
-    title: "Страница «Пакеты»",
-    note: "/packages — шапка и блок «или по отдельности»",
-    keys: [
-      "page.packages.eyebrow",
-      "page.packages.title",
-      "page.packages.lead",
-      "page.packages.singleEyebrow",
-      "page.packages.singleTitle",
-      "page.packages.singleLead",
-    ],
-  },
-  {
-    title: "Шапка страницы «Работы»",
-    note: "/works",
-    keys: ["page.works.eyebrow", "page.works.title", "page.works.lead"],
-  },
-  {
-    title: "Шапка страницы «Вопросы»",
-    note: "/faq — сами вопросы правятся в своём разделе",
-    keys: ["page.faq.eyebrow", "page.faq.title", "page.faq.lead"],
-  },
-  {
-    title: "Шапка страницы «Контакты»",
-    note: "/contacts",
-    keys: ["page.contacts.eyebrow", "page.contacts.title", "page.contacts.lead"],
-  },
-  {
-    title: "Страница «Кому подходит» — шапка",
-    note: "/industries",
-    keys: ["page.industries.eyebrow", "page.industries.title", "page.industries.lead"],
-  },
-  {
-    title: "Страница «Кому подходит» — шесть ниш",
-    note: "Сюда стоит перенести те слова, которыми клиенты сами описывают свою задачу",
-    keys: [
-      "industries.card1.name",
-      "industries.card1.tag",
-      "industries.card1.problem",
-      "industries.card1.solution",
-      "industries.card2.name",
-      "industries.card2.tag",
-      "industries.card2.problem",
-      "industries.card2.solution",
-      "industries.card3.name",
-      "industries.card3.tag",
-      "industries.card3.problem",
-      "industries.card3.solution",
-      "industries.card4.name",
-      "industries.card4.tag",
-      "industries.card4.problem",
-      "industries.card4.solution",
-      "industries.card5.name",
-      "industries.card5.tag",
-      "industries.card5.problem",
-      "industries.card5.solution",
-      "industries.card6.name",
-      "industries.card6.tag",
-      "industries.card6.problem",
-      "industries.card6.solution",
-      "industries.band.title",
-      "industries.band.text",
-    ],
-  },
-  {
-    title: "Подвал",
-    note: "Строка о студии рядом с маскотом",
-    keys: ["footer.tagline"],
-  },
-];
-
 export const TEXT_KEYS = Object.keys(TEXT_DEFAULTS) as TextKey[];
+
+/**
+ * Места на сайте, куда владелец ставит свою фотографию.
+ *
+ * Хранится тем же ключ-значением, что и тексты: в базе лежит НОМЕР
+ * загруженной картинки строкой. Отдельная таблица тут ничего не добавила бы,
+ * а миграцию потребовала бы.
+ *
+ * Значение по умолчанию — файл из `public/` вместе с настоящими размерами.
+ * Размеры обязательны: без них браузер не знает, сколько места занять,
+ * и страница дёргается, пока грузятся снимки первого экрана.
+ *
+ * `ratio` — во что кадрируется снимок в рамке. Показывается подсказкой:
+ * иначе владелец загрузит вертикальное фото в горизонтальное окно браузера
+ * и увидит обрезанные поля вместо сайта.
+ */
+export type ImageSlotKey = keyof typeof IMAGE_SLOTS;
+
+export const IMAGE_SLOTS = {
+  "home.hero.browser.image": {
+    label: "Снимок сайта в окне браузера",
+    hint: "Горизонтальный, кадрируется под 16/10",
+    ratio: "16/10",
+    fallback: { url: "/works/bricks-desktop.webp", width: 880, height: 550 },
+  },
+  "home.hero.phone.image": {
+    label: "Снимок в рамке телефона",
+    hint: "Вертикальный, кадрируется под 9/16",
+    ratio: "9/16",
+    fallback: { url: "/works/bricks-mobile.webp", width: 420, height: 747 },
+  },
+} as const;
+
+export const IMAGE_SLOT_KEYS = Object.keys(IMAGE_SLOTS) as ImageSlotKey[];
+
+export function isImageSlot(value: string): value is ImageSlotKey {
+  return value in IMAGE_SLOTS;
+}
+
+/** Готовая картинка для страницы: адрес и размеры. */
+export type SlotImage = { url: string; width: number; height: number };
 
 export function isTextKey(value: string): value is TextKey {
   return value in TEXT_DEFAULTS;

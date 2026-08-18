@@ -43,9 +43,7 @@ import { Route as ServicesWebsitesCorporateRouteImport } from './routes/services
 import { Route as ServicesBotsTelegramRouteImport } from './routes/services.bots.telegram'
 import { Route as ServicesBotsMiniappRouteImport } from './routes/services.bots.miniapp'
 import { Route as ServicesBotsMaxRouteImport } from './routes/services.bots.max'
-import { Route as AdminContentTextsRouteImport } from './routes/admin.content.texts'
 import { Route as AdminContentPackagesRouteImport } from './routes/admin.content.packages'
-import { Route as AdminContentMetricsRouteImport } from './routes/admin.content.metrics'
 import { Route as AdminContentFaqRouteImport } from './routes/admin.content.faq'
 import { Route as AdminContentContactsRouteImport } from './routes/admin.content.contacts'
 import { Route as AdminCasesNewRouteImport } from './routes/admin.cases.new'
@@ -53,8 +51,10 @@ import { Route as AdminCasesSlugRouteImport } from './routes/admin.cases.$slug'
 import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
 import { Route as AdminContentServicesIndexRouteImport } from './routes/admin.content.services.index'
 import { Route as AdminContentSeoIndexRouteImport } from './routes/admin.content.seo.index'
+import { Route as AdminContentSectionsIndexRouteImport } from './routes/admin.content.sections.index'
 import { Route as AdminContentServicesSlugRouteImport } from './routes/admin.content.services.$slug'
 import { Route as AdminContentSeoSlugRouteImport } from './routes/admin.content.seo.$slug'
+import { Route as AdminContentSectionsSlugRouteImport } from './routes/admin.content.sections.$slug'
 
 const WorksRoute = WorksRouteImport.update({
   id: '/works',
@@ -230,19 +230,9 @@ const ServicesBotsMaxRoute = ServicesBotsMaxRouteImport.update({
   path: '/max',
   getParentRoute: () => ServicesBotsRoute,
 } as any)
-const AdminContentTextsRoute = AdminContentTextsRouteImport.update({
-  id: '/content/texts',
-  path: '/content/texts',
-  getParentRoute: () => AdminRoute,
-} as any)
 const AdminContentPackagesRoute = AdminContentPackagesRouteImport.update({
   id: '/content/packages',
   path: '/content/packages',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminContentMetricsRoute = AdminContentMetricsRouteImport.update({
-  id: '/content/metrics',
-  path: '/content/metrics',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminContentFaqRoute = AdminContentFaqRouteImport.update({
@@ -282,6 +272,12 @@ const AdminContentSeoIndexRoute = AdminContentSeoIndexRouteImport.update({
   path: '/content/seo/',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminContentSectionsIndexRoute =
+  AdminContentSectionsIndexRouteImport.update({
+    id: '/content/sections/',
+    path: '/content/sections/',
+    getParentRoute: () => AdminRoute,
+  } as any)
 const AdminContentServicesSlugRoute =
   AdminContentServicesSlugRouteImport.update({
     id: '/content/services/$slug',
@@ -293,6 +289,12 @@ const AdminContentSeoSlugRoute = AdminContentSeoSlugRouteImport.update({
   path: '/content/seo/$slug',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminContentSectionsSlugRoute =
+  AdminContentSectionsSlugRouteImport.update({
+    id: '/content/sections/$slug',
+    path: '/content/sections/$slug',
+    getParentRoute: () => AdminRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -324,9 +326,7 @@ export interface FileRoutesByFullPath {
   '/admin/cases/new': typeof AdminCasesNewRoute
   '/admin/content/contacts': typeof AdminContentContactsRoute
   '/admin/content/faq': typeof AdminContentFaqRoute
-  '/admin/content/metrics': typeof AdminContentMetricsRoute
   '/admin/content/packages': typeof AdminContentPackagesRoute
-  '/admin/content/texts': typeof AdminContentTextsRoute
   '/services/bots/max': typeof ServicesBotsMaxRoute
   '/services/bots/miniapp': typeof ServicesBotsMiniappRoute
   '/services/bots/telegram': typeof ServicesBotsTelegramRoute
@@ -337,8 +337,10 @@ export interface FileRoutesByFullPath {
   '/admin/content/': typeof AdminContentIndexRoute
   '/services/bots/': typeof ServicesBotsIndexRoute
   '/services/websites/': typeof ServicesWebsitesIndexRoute
+  '/admin/content/sections/$slug': typeof AdminContentSectionsSlugRoute
   '/admin/content/seo/$slug': typeof AdminContentSeoSlugRoute
   '/admin/content/services/$slug': typeof AdminContentServicesSlugRoute
+  '/admin/content/sections/': typeof AdminContentSectionsIndexRoute
   '/admin/content/seo/': typeof AdminContentSeoIndexRoute
   '/admin/content/services/': typeof AdminContentServicesIndexRoute
 }
@@ -367,9 +369,7 @@ export interface FileRoutesByTo {
   '/admin/cases/new': typeof AdminCasesNewRoute
   '/admin/content/contacts': typeof AdminContentContactsRoute
   '/admin/content/faq': typeof AdminContentFaqRoute
-  '/admin/content/metrics': typeof AdminContentMetricsRoute
   '/admin/content/packages': typeof AdminContentPackagesRoute
-  '/admin/content/texts': typeof AdminContentTextsRoute
   '/services/bots/max': typeof ServicesBotsMaxRoute
   '/services/bots/miniapp': typeof ServicesBotsMiniappRoute
   '/services/bots/telegram': typeof ServicesBotsTelegramRoute
@@ -380,8 +380,10 @@ export interface FileRoutesByTo {
   '/admin/content': typeof AdminContentIndexRoute
   '/services/bots': typeof ServicesBotsIndexRoute
   '/services/websites': typeof ServicesWebsitesIndexRoute
+  '/admin/content/sections/$slug': typeof AdminContentSectionsSlugRoute
   '/admin/content/seo/$slug': typeof AdminContentSeoSlugRoute
   '/admin/content/services/$slug': typeof AdminContentServicesSlugRoute
+  '/admin/content/sections': typeof AdminContentSectionsIndexRoute
   '/admin/content/seo': typeof AdminContentSeoIndexRoute
   '/admin/content/services': typeof AdminContentServicesIndexRoute
 }
@@ -416,9 +418,7 @@ export interface FileRoutesById {
   '/admin/cases/new': typeof AdminCasesNewRoute
   '/admin/content/contacts': typeof AdminContentContactsRoute
   '/admin/content/faq': typeof AdminContentFaqRoute
-  '/admin/content/metrics': typeof AdminContentMetricsRoute
   '/admin/content/packages': typeof AdminContentPackagesRoute
-  '/admin/content/texts': typeof AdminContentTextsRoute
   '/services/bots/max': typeof ServicesBotsMaxRoute
   '/services/bots/miniapp': typeof ServicesBotsMiniappRoute
   '/services/bots/telegram': typeof ServicesBotsTelegramRoute
@@ -429,8 +429,10 @@ export interface FileRoutesById {
   '/admin/content/': typeof AdminContentIndexRoute
   '/services/bots/': typeof ServicesBotsIndexRoute
   '/services/websites/': typeof ServicesWebsitesIndexRoute
+  '/admin/content/sections/$slug': typeof AdminContentSectionsSlugRoute
   '/admin/content/seo/$slug': typeof AdminContentSeoSlugRoute
   '/admin/content/services/$slug': typeof AdminContentServicesSlugRoute
+  '/admin/content/sections/': typeof AdminContentSectionsIndexRoute
   '/admin/content/seo/': typeof AdminContentSeoIndexRoute
   '/admin/content/services/': typeof AdminContentServicesIndexRoute
 }
@@ -466,9 +468,7 @@ export interface FileRouteTypes {
     | '/admin/cases/new'
     | '/admin/content/contacts'
     | '/admin/content/faq'
-    | '/admin/content/metrics'
     | '/admin/content/packages'
-    | '/admin/content/texts'
     | '/services/bots/max'
     | '/services/bots/miniapp'
     | '/services/bots/telegram'
@@ -479,8 +479,10 @@ export interface FileRouteTypes {
     | '/admin/content/'
     | '/services/bots/'
     | '/services/websites/'
+    | '/admin/content/sections/$slug'
     | '/admin/content/seo/$slug'
     | '/admin/content/services/$slug'
+    | '/admin/content/sections/'
     | '/admin/content/seo/'
     | '/admin/content/services/'
   fileRoutesByTo: FileRoutesByTo
@@ -509,9 +511,7 @@ export interface FileRouteTypes {
     | '/admin/cases/new'
     | '/admin/content/contacts'
     | '/admin/content/faq'
-    | '/admin/content/metrics'
     | '/admin/content/packages'
-    | '/admin/content/texts'
     | '/services/bots/max'
     | '/services/bots/miniapp'
     | '/services/bots/telegram'
@@ -522,8 +522,10 @@ export interface FileRouteTypes {
     | '/admin/content'
     | '/services/bots'
     | '/services/websites'
+    | '/admin/content/sections/$slug'
     | '/admin/content/seo/$slug'
     | '/admin/content/services/$slug'
+    | '/admin/content/sections'
     | '/admin/content/seo'
     | '/admin/content/services'
   id:
@@ -557,9 +559,7 @@ export interface FileRouteTypes {
     | '/admin/cases/new'
     | '/admin/content/contacts'
     | '/admin/content/faq'
-    | '/admin/content/metrics'
     | '/admin/content/packages'
-    | '/admin/content/texts'
     | '/services/bots/max'
     | '/services/bots/miniapp'
     | '/services/bots/telegram'
@@ -570,8 +570,10 @@ export interface FileRouteTypes {
     | '/admin/content/'
     | '/services/bots/'
     | '/services/websites/'
+    | '/admin/content/sections/$slug'
     | '/admin/content/seo/$slug'
     | '/admin/content/services/$slug'
+    | '/admin/content/sections/'
     | '/admin/content/seo/'
     | '/admin/content/services/'
   fileRoutesById: FileRoutesById
@@ -836,25 +838,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ServicesBotsMaxRouteImport
       parentRoute: typeof ServicesBotsRoute
     }
-    '/admin/content/texts': {
-      id: '/admin/content/texts'
-      path: '/content/texts'
-      fullPath: '/admin/content/texts'
-      preLoaderRoute: typeof AdminContentTextsRouteImport
-      parentRoute: typeof AdminRoute
-    }
     '/admin/content/packages': {
       id: '/admin/content/packages'
       path: '/content/packages'
       fullPath: '/admin/content/packages'
       preLoaderRoute: typeof AdminContentPackagesRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/content/metrics': {
-      id: '/admin/content/metrics'
-      path: '/content/metrics'
-      fullPath: '/admin/content/metrics'
-      preLoaderRoute: typeof AdminContentMetricsRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/content/faq': {
@@ -906,6 +894,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminContentSeoIndexRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/content/sections/': {
+      id: '/admin/content/sections/'
+      path: '/content/sections'
+      fullPath: '/admin/content/sections/'
+      preLoaderRoute: typeof AdminContentSectionsIndexRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/content/services/$slug': {
       id: '/admin/content/services/$slug'
       path: '/content/services/$slug'
@@ -920,6 +915,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminContentSeoSlugRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/content/sections/$slug': {
+      id: '/admin/content/sections/$slug'
+      path: '/content/sections/$slug'
+      fullPath: '/admin/content/sections/$slug'
+      preLoaderRoute: typeof AdminContentSectionsSlugRouteImport
+      parentRoute: typeof AdminRoute
+    }
   }
 }
 
@@ -930,13 +932,13 @@ interface AdminRouteChildren {
   AdminCasesNewRoute: typeof AdminCasesNewRoute
   AdminContentContactsRoute: typeof AdminContentContactsRoute
   AdminContentFaqRoute: typeof AdminContentFaqRoute
-  AdminContentMetricsRoute: typeof AdminContentMetricsRoute
   AdminContentPackagesRoute: typeof AdminContentPackagesRoute
-  AdminContentTextsRoute: typeof AdminContentTextsRoute
   AdminCasesIndexRoute: typeof AdminCasesIndexRoute
   AdminContentIndexRoute: typeof AdminContentIndexRoute
+  AdminContentSectionsSlugRoute: typeof AdminContentSectionsSlugRoute
   AdminContentSeoSlugRoute: typeof AdminContentSeoSlugRoute
   AdminContentServicesSlugRoute: typeof AdminContentServicesSlugRoute
+  AdminContentSectionsIndexRoute: typeof AdminContentSectionsIndexRoute
   AdminContentSeoIndexRoute: typeof AdminContentSeoIndexRoute
   AdminContentServicesIndexRoute: typeof AdminContentServicesIndexRoute
 }
@@ -948,13 +950,13 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminCasesNewRoute: AdminCasesNewRoute,
   AdminContentContactsRoute: AdminContentContactsRoute,
   AdminContentFaqRoute: AdminContentFaqRoute,
-  AdminContentMetricsRoute: AdminContentMetricsRoute,
   AdminContentPackagesRoute: AdminContentPackagesRoute,
-  AdminContentTextsRoute: AdminContentTextsRoute,
   AdminCasesIndexRoute: AdminCasesIndexRoute,
   AdminContentIndexRoute: AdminContentIndexRoute,
+  AdminContentSectionsSlugRoute: AdminContentSectionsSlugRoute,
   AdminContentSeoSlugRoute: AdminContentSeoSlugRoute,
   AdminContentServicesSlugRoute: AdminContentServicesSlugRoute,
+  AdminContentSectionsIndexRoute: AdminContentSectionsIndexRoute,
   AdminContentSeoIndexRoute: AdminContentSeoIndexRoute,
   AdminContentServicesIndexRoute: AdminContentServicesIndexRoute,
 }

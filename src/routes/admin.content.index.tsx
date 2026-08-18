@@ -2,17 +2,17 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import {
   ChevronRight,
   CircleHelp,
-  Hash,
+  LayoutPanelTop,
   Layers,
   Phone,
   Search,
-  Type,
   Wallet,
   type LucideIcon,
 } from "lucide-react";
 
 import { fetchAdminContent } from "../lib/admin.rpc";
 import { TEXT_DEFAULTS } from "../data/texts";
+import { SECTIONS } from "../data/sections";
 import { SEO_DEFAULTS, SEO_PAGES } from "../data/seo-pages";
 
 /**
@@ -64,6 +64,13 @@ function ContentMenu() {
 
   const items: Item[] = [
     {
+      to: "/admin/content/sections",
+      icon: LayoutPanelTop,
+      title: "Разделы сайта",
+      note: "Первый экран, блок работ, заявка, шапки страниц — по кускам страницы",
+      summary: changedTexts ? `изменено: ${changedTexts}` : `${SECTIONS.length} разделов`,
+    },
+    {
       to: "/admin/content/services",
       icon: Wallet,
       title: "Услуги",
@@ -85,25 +92,11 @@ function ContentMenu() {
       summary: `${data.faq.length} · на главной ${previewCount}`,
     },
     {
-      to: "/admin/content/metrics",
-      icon: Hash,
-      title: "Цифры",
-      note: "Плитки на главной и над списком работ",
-      summary: `${data.metrics.home.length + data.metrics.works.length} плиток`,
-    },
-    {
       to: "/admin/content/contacts",
       icon: Phone,
       title: "Контакты",
       note: "Telegram, телефон и почта",
       summary: filledContacts ? `${filledContacts} заполнено` : "не заполнены",
-    },
-    {
-      to: "/admin/content/texts",
-      icon: Type,
-      title: "Тексты сайта",
-      note: "Главная, блок заявки, шапки страниц, карточки ниш",
-      summary: changedTexts ? `изменено: ${changedTexts}` : "как в исходном виде",
     },
     {
       to: "/admin/content/seo",

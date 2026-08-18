@@ -15,6 +15,7 @@
  */
 
 import { all, get, run, transaction, contentVersion, bumpContentVersion } from "./db.server";
+import { mediaUrl, type MediaKind } from "./media.server";
 import {
   SERVICE_SEEDS,
   PACKAGE_SEEDS,
@@ -25,7 +26,14 @@ import {
   type PackageId,
 } from "../data/services";
 import { FAQ_SEEDS, type FaqItem } from "../data/faq";
-import { TEXT_DEFAULTS, type TextKey } from "../data/texts";
+import {
+  IMAGE_SLOTS,
+  IMAGE_SLOT_KEYS,
+  TEXT_DEFAULTS,
+  type ImageSlotKey,
+  type SlotImage,
+  type TextKey,
+} from "../data/texts";
 import { METRIC_SEEDS, type MetricTile } from "../data/metrics";
 import { CONTACT_SEEDS, type ContactChannel } from "../data/contacts";
 import { SEO_DEFAULTS, type SeoEntry } from "../data/seo-pages";
@@ -49,6 +57,14 @@ export type ContentSnapshot = {
   metrics: { home: MetricTile[]; works: MetricTile[] };
   contacts: ContactChannel[];
   texts: Record<TextKey, string>;
+  /**
+   * Фотографии, которые владелец поставил в макеты первого экрана.
+   *
+   * Всегда заполнено: где своей картинки нет, лежит файл из `public/`
+   * с настоящими размерами. Размеры обязательны — без них браузер не знает,
+   * сколько места занять, и первый экран дёргается при загрузке.
+   */
+  images: Record<ImageSlotKey, SlotImage>;
   /**
    * Мета-теги всех страниц, ключ — путь.
    *
@@ -303,10 +319,22 @@ function buildSnapshot(): ContentSnapshot {
 
   const textRows = all<{ key: string; value: string }>("SELECT key, value FROM text_override");
   const texts = { ...TEXT_DEFAULTS } as Record<TextKey, string>;
+  const rawByKey = new Map(textRows.map((row) => [row.key, row.value]));
   for (const row of textRows) {
     if (row.key in texts && row.value.trim() !== "") {
       texts[row.key as TextKey] = row.value;
     }
+  }
+
+  /* Картинки макетов лежат в той же таблице ключ-значение: в строке номер
+     загруженного файла. Отдельная таблица потребовала бы миграции и ничего
+     бы не дала — снимков ровно два и оба необязательные.
+
+     Пропавшая запись в media (файл удалили) не оставляет дыру в вёрстке:
+     слот возвращается к картинке из кода. */
+  const images = {} as Record<ImageSlotKey, SlotImage>;
+  for (const slot of IMAGE_SLOT_KEYS) {
+    images[slot] = resolveSlot(rawByKey.get(slot)) ?? IMAGE_SLOTS[slot].fallback;
   }
 
   /* Мета-теги. Плейсхолдеры разбираются здесь же: в описании `/packages`
@@ -353,8 +381,44 @@ function buildSnapshot(): ContentSnapshot {
     metrics,
     contacts,
     texts,
+    images,
     seo,
   };
+}
+
+/**
+ * Номер загруженной картинки → адрес и размеры.
+ *
+ * Размеры берутся из базы, а не из того, что прислал браузер: присланные
+ * могут не совпасть с настоящими, а на них держится вёрстка первого экрана.
+ */
+function resolveSlot(raw: string | undefined): SlotImage | null {
+  const id = Number(raw ?? "");
+  if (!Number.isInteger(id) || id <= 0) return null;
+
+  const row = get<{ hash: string; ext: MediaKind; width: number; height: number }>(
+    "SELECT hash, ext, width, height FROM media WHERE id = ?",
+    [id],
+  );
+  if (!row) return null;
+
+  /* Адрес собирается тем же способом, что и для обложек кейсов: два места,
+     собирающих одну и ту же ссылку по-разному, однажды разойдутся. */
+  return { url: mediaUrl(row), width: row.width, height: row.height };
+}
+
+/** Сохранить или убрать картинку слота. `null` возвращает картинку из кода. */
+export function saveImageSlot(slot: string, mediaId: number | null): void {
+  if (mediaId && mediaId > 0) {
+    run(
+      `INSERT INTO text_override (key, value, updated_at) VALUES (?,?,?)
+       ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at`,
+      [slot, String(mediaId), Date.now()],
+    );
+  } else {
+    run("DELETE FROM text_override WHERE key = ?", [slot]);
+  }
+  bumpContentVersion();
 }
 
 // ───────────────────────────────────────────── содержимое страниц услуг ─────
