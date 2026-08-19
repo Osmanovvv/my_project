@@ -1,7 +1,7 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useLoaderData } from "@tanstack/react-router";
 import { ArrowRight, Globe, Zap, ShoppingBag, Layout, Search, Check } from "lucide-react";
 import { ServiceDetailLayout } from "../components/site/ServiceDetailLayout";
-import { getService } from "../data/services";
+import type { ServiceId } from "../data/services";
 import { fetchPageMeta } from "../lib/content.rpc";
 import { pageSeo } from "../lib/seo";
 import { SectionEyebrow } from "../components/site/SectionEyebrow";
@@ -13,25 +13,33 @@ export const Route = createFileRoute("/services/websites/")({
   component: WebsitesPage,
 });
 
-/* Сроки и ссылки — из каталога, заголовок и текст остаются страничной подводкой. */
-const types = [
+/**
+ * Иконка и подводка — страничные, идентификатор услуги — ссылка в каталог.
+ *
+ * Сам срок здесь НЕ записан. Раньше он приходил из `getService`, то есть
+ * прямо из кода, мимо снимка контента: владелец правил срок в админке,
+ * страница услуги показывала новый, а этот хаб — прежний. Две страницы
+ * про одну услугу с разными сроками, и заметить это можно было только
+ * открыв обе.
+ */
+const types: Array<{ icon: typeof Zap; id: ServiceId; title: string; text: string }> = [
   {
     icon: Zap,
+    id: "websites/landing",
     title: "Лендинг",
     text: "Одностраничник под конкретную услугу или запуск.",
-    service: getService("websites/landing"),
   },
   {
     icon: Layout,
+    id: "websites/corporate",
     title: "Корпоративный сайт",
     text: "Многостраничный сайт с услугами, кейсами, блогом.",
-    service: getService("websites/corporate"),
   },
   {
     icon: ShoppingBag,
+    id: "websites/ecommerce",
     title: "E-commerce",
     text: "Магазин с корзиной, оплатой, доставкой, интеграциями.",
-    service: getService("websites/ecommerce"),
   },
 ];
 
@@ -45,6 +53,9 @@ const includes = [
 ];
 
 function WebsitesPage() {
+  /* Срок и путь — из снимка контента: он знает про правки в админке. */
+  const { serviceById } = useLoaderData({ from: "__root__" });
+
   return (
     <ServiceDetailLayout
       eyebrow="Сайты"
@@ -63,23 +74,26 @@ function WebsitesPage() {
           <h2 className="mt-3 font-display text-3xl sm:text-4xl">Что можем сделать</h2>
         </div>
         <div className="grid md:grid-cols-3 gap-5">
-          {types.map(({ icon: Icon, title, text, service }) => (
-            <Link
-              key={title}
-              to={service.path}
-              className="group relative rounded-2xl border border-border bg-surface p-6 hover:border-accent/50 hover:-translate-y-0.5 transition flex flex-col"
-            >
-              <div className="grid h-11 w-11 place-items-center rounded-xl bg-accent-soft text-accent mb-5 group-hover:bg-accent group-hover:text-accent-foreground transition">
-                <Icon className="h-5 w-5" strokeWidth={1.75} />
-              </div>
-              <div className="font-display text-lg">{title}</div>
-              <p className="mt-2 text-sm text-muted-foreground leading-relaxed">{text}</p>
-              <div className="mt-4 pt-4 border-t border-border text-xs uppercase tracking-[0.14em] text-accent/80 flex items-center justify-between">
-                <span>{service.timeline}</span>
-                <ArrowRight className="h-3.5 w-3.5 text-accent group-hover:translate-x-1 transition" />
-              </div>
-            </Link>
-          ))}
+          {types.map(({ icon: Icon, id, title, text }) => {
+            const service = serviceById[id];
+            return (
+              <Link
+                key={title}
+                to={service.path}
+                className="group relative rounded-2xl border border-border bg-surface p-6 hover:border-accent/50 hover:-translate-y-0.5 transition flex flex-col"
+              >
+                <div className="grid h-11 w-11 place-items-center rounded-xl bg-accent-soft text-accent mb-5 group-hover:bg-accent group-hover:text-accent-foreground transition">
+                  <Icon className="h-5 w-5" strokeWidth={1.75} />
+                </div>
+                <div className="font-display text-lg">{title}</div>
+                <p className="mt-2 text-sm text-muted-foreground leading-relaxed">{text}</p>
+                <div className="mt-4 pt-4 border-t border-border text-xs uppercase tracking-[0.14em] text-accent/80 flex items-center justify-between">
+                  <span>{service.timeline}</span>
+                  <ArrowRight className="h-3.5 w-3.5 text-accent group-hover:translate-x-1 transition" />
+                </div>
+              </Link>
+            );
+          })}
         </div>
       </section>
 
