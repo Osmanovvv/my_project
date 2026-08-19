@@ -2,6 +2,12 @@ import "./lib/error-capture";
 
 import { consumeLastCapturedError } from "./lib/error-capture";
 import { renderErrorPage } from "./lib/error-page";
+import { reportStartupConfig } from "./server/startup.server";
+
+/* Один раз при первом запросе: что настроено, а что нет. Молчаливо
+   недонастроенный сервер выглядит рабочим — форма отвечает «отправлено»,
+   а уведомления не приходят. */
+reportStartupConfig();
 
 type ServerEntry = {
   fetch: (request: Request, env: unknown, ctx: unknown) => Promise<Response> | Response;

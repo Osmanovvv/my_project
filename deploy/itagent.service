@@ -1,0 +1,66 @@
+# Юнит systemd для боевого сервера.
+#
+# Установка:
+#   sudo cp deploy/itagent.service /etc/systemd/system/
+#   sudo nano /etc/systemd/system/itagent.service     ← подставить свои значения
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now itagent
+#   sudo journalctl -u itagent -f                     ← смотреть лог
+#
+# Проверить, что настройки подхватились: открыть сайт и найти в логе строки
+# «[настройки] …». Если там «уведомления о заявках: ВЫКЛЮЧЕНЫ» — заявки
+# сохраняются, но в Telegram не приходят.
+
+[Unit]
+Description=IT-Agent — сайт, бот и админка заявок
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+
+# Не root. Пользователя завести заранее:
+#   sudo useradd --system --home /srv/itagent --shell /usr/sbin/nologin itagent
+User=itagent
+Group=itagent
+
+WorkingDirectory=/srv/itagent
+ExecStart=/usr/bin/node /srv/itagent/.output/server/index.mjs
+
+# ── Настройки ────────────────────────────────────────────────────────────
+# Переменные можно задать здесь либо положить .env в WorkingDirectory —
+# приложение подхватит файл, если переменной нет в окружении. Здесь
+# надёжнее: файл легко потерять при выкладке новой сборки.
+
+Environment=PORT=3000
+
+# Единственное место, где живут заявки, кейсы и фотографии. ОБЯЗАТЕЛЬНО
+# вне каталога приложения: .output стирается при каждой сборке.
+Environment=DATA_DIR=/var/lib/itagent
+
+# Уведомления о заявках. Без них форма работает и заявка сохраняется,
+# но в чат ничего не придёт.
+Environment=TELEGRAM_BOT_TOKEN=сюда_токен_от_BotFather
+Environment=TELEGRAM_CHAT_ID=сюда_id_чата
+
+# Первый пароль в админку, не короче 8 символов. Читается только пока
+# пароль не задан; потом хранится хешем в базе, и строку можно удалить.
+Environment=ADMIN_PASSWORD=придумать_длинный_пароль
+
+# VITE_SITE_URL здесь НЕ задают: адрес вшивается в бандл при сборке.
+#   VITE_SITE_URL=https://itagent.ru NITRO_PRESET=node-server bun run build
+
+# ── Устойчивость ─────────────────────────────────────────────────────────
+Restart=always
+RestartSec=3
+
+# ── Ограничения прав ─────────────────────────────────────────────────────
+# Процессу нужен только каталог данных; всё остальное — только на чтение.
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/itagent
+
+[Install]
+WantedBy=multi-user.target
