@@ -1,0 +1,12 @@
+# Запуск itagent-backup.service каждую ночь. См. комментарий в .service.
+
+[Unit]
+Description=IT-Agent — ежедневная резервная копия
+
+[Timer]
+OnCalendar=*-*-* 03:30:00
+# Если сервер был выключен в 03:30 — сделать копию при следующем включении.
+Persistent=true
+
+[Install]
+WantedBy=timers.target

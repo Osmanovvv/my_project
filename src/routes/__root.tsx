@@ -17,6 +17,7 @@ import { SiteFooter } from "../components/site/SiteFooter";
 import { MascotCompanion } from "../components/site/MascotCompanion";
 import { Toaster } from "../components/ui/sonner";
 import { ORGANIZATION } from "../data/contacts";
+import { readAttribution } from "../lib/attribution";
 import { fetchSiteContent } from "../lib/content.rpc";
 import { absoluteUrl, jsonLd, seo, SITE_NAME } from "../lib/seo";
 
@@ -162,6 +163,15 @@ function RootShell({ children }: { children: ReactNode }) {
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const pathname = useRouterState({ select: (state) => state.location.pathname });
+
+  /* Метки источника (utm, реферер) снимаются с адреса ПЕРВОЙ страницы —
+     один раз при загрузке. Раньше их читали только в момент отправки
+     формы: человек приходил с рекламы на главную, переходил на «Контакты»
+     и отправлял заявку уже с чистого адреса — заявка выглядела пришедшей
+     ниоткуда, и реклама не получала ни одной конверсии. */
+  useEffect(() => {
+    readAttribution();
+  }, []);
 
   /**
    * Админка живёт под тем же корнем, но обвязка сайта ей не нужна и мешает:

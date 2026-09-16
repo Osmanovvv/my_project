@@ -162,12 +162,18 @@ export function login(plain: string): LoginResult {
       lockUntil ? 0 : failed,
       lockUntil,
     ]);
+    /* Неудачный вход — в журнал: политика обещает регистрировать события
+       доступа, а серия таких строк — единственный способ заметить подбор. */
+    console.warn(
+      `[admin] неверный пароль (попытка ${failed}${lockUntil ? ", вход заблокирован" : ""})`,
+    );
     return lockUntil
       ? { ok: false, reason: "locked", retryInMs: LOCK_MS }
       : { ok: false, reason: "bad_password" };
   }
 
   run("UPDATE admin_account SET failed_count = 0, locked_until = 0 WHERE id = 1");
+  console.log("[admin] вход в панель управления");
   return { ok: true, token: createSession() };
 }
 

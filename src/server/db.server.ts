@@ -68,6 +68,11 @@ function db(): DatabaseSync {
   next.exec("PRAGMA synchronous = NORMAL");
   next.exec("PRAGMA foreign_keys = ON");
   next.exec("PRAGMA busy_timeout = 5000");
+  /* Удалённое затирается нулями, а не остаётся в свободных страницах
+     файла до случайной перезаписи. Политика обещает уничтожение данных
+     по отзыву согласия — обычный DELETE этому обещанию не соответствует:
+     строку видно в hex-редакторе. Цена — незаметная при таких объёмах. */
+  next.exec("PRAGMA secure_delete = ON");
 
   migrate(next);
 

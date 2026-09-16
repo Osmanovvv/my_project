@@ -1,9 +1,14 @@
 /**
  * Источник заявки: UTM-метки и внешний реферер.
  *
- * Считываются один раз при первом заходе и живут в sessionStorage — иначе
- * при переходе на `/contacts` метки из URL уже потеряны и в Telegram
- * приходит заявка «ниоткуда».
+ * Считываются при загрузке страницы (вызов в корне приложения) и живут
+ * в sessionStorage — иначе при переходе на `/contacts` метки из URL уже
+ * потеряны и в Telegram приходит заявка «ниоткуда».
+ *
+ * Адрес с метками всегда перекрывает сохранённое: человек мог открыть
+ * сайт руками, а потом в той же вкладке прийти по рекламной ссылке —
+ * считается последний переход с метками. Без меток сохранённое остаётся:
+ * внутренние переходы по сайту источник не стирают.
  */
 
 const STORAGE_KEY = "it-agent:attribution";
@@ -18,6 +23,11 @@ const TRACKED_PARAMS = [
   "gclid",
   "yclid",
 ];
+
+function hasTrackedParams(): boolean {
+  const params = new URLSearchParams(window.location.search);
+  return TRACKED_PARAMS.some((name) => Boolean(params.get(name)));
+}
 
 function collect(): string {
   const params = new URLSearchParams(window.location.search);
@@ -42,7 +52,7 @@ export function readAttribution(): string {
 
   try {
     const stored = window.sessionStorage.getItem(STORAGE_KEY);
-    if (stored !== null) return stored;
+    if (stored !== null && !hasTrackedParams()) return stored;
 
     const collected = collect();
     window.sessionStorage.setItem(STORAGE_KEY, collected);

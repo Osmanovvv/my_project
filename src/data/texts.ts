@@ -124,7 +124,6 @@ export const TEXT_DEFAULTS = {
   "contact.taskPlaceholder": "Например: интернет-магазин, много заявок теряется",
   "contact.submit": "Отправить заявку",
   "contact.success": "Заявка отправлена — свяжемся в течение рабочего дня.",
-  "contact.consent": "Нажимая, вы соглашаетесь на обработку контактных данных.",
 
   // ── Шапки внутренних страниц ───────────────────────────────────────────
   "page.services.eyebrow": "Услуги",
@@ -201,6 +200,14 @@ export const TEXT_DEFAULTS = {
   "industries.band.title": "Не нашли свою нишу? Это не проблема.",
   "industries.band.text":
     "Мы работаем с любым бизнесом, где есть входящие заявки. Расскажите про свой поток — предложим схему.",
+
+  // ── Оператор персональных данных ───────────────────────────────────────
+  // Подставляется в политику и согласие (см. data/legal.ts). Пусто —
+  // документы называют оператором студию; на боевом сайте здесь должен
+  // стоять конкретный человек или ИП, иначе субъекту данных некому писать.
+  "legal.operator.name": "",
+  "legal.operator.status": "",
+  "legal.operator.inn": "",
 } as const;
 
 /** Человеческие подписи полей в админке. */
@@ -274,7 +281,6 @@ export const TEXT_LABELS: Record<TextKey, string> = {
   "contact.taskPlaceholder": "Подсказка в поле «о задаче»",
   "contact.submit": "Надпись на кнопке",
   "contact.success": "Сообщение после отправки",
-  "contact.consent": "Строка про обработку данных",
 
   "page.services.eyebrow": "Надзаголовок",
   "page.services.title": "Заголовок",
@@ -330,6 +336,10 @@ export const TEXT_LABELS: Record<TextKey, string> = {
 
   "industries.band.title": "Блок внизу — заголовок",
   "industries.band.text": "Блок внизу — текст",
+
+  "legal.operator.name": "ФИО или наименование оператора",
+  "legal.operator.status": "Статус",
+  "legal.operator.inn": "ИНН",
 };
 
 /**
@@ -390,6 +400,9 @@ export const TEXT_LIMITS: Partial<Record<TextKey, number>> = {
   "page.faq.title": 45,
   "page.contacts.title": 45,
   "page.industries.title": 45,
+  "legal.operator.name": 80,
+  "legal.operator.status": 40,
+  "legal.operator.inn": 12,
 };
 
 export const TEXT_KEYS = Object.keys(TEXT_DEFAULTS) as TextKey[];

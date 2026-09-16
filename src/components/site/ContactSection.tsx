@@ -1,11 +1,12 @@
 import { useId, useState, type FormEvent } from "react";
-import { useLoaderData } from "@tanstack/react-router";
+import { Link, useLoaderData } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { ArrowRight, Check, TriangleAlert } from "lucide-react";
 import { readAttribution } from "../../lib/attribution";
 import { AccentText } from "./AccentText";
 import { SectionEyebrow } from "./SectionEyebrow";
 import { CheckMark } from "./CheckMark";
+import { CONSENT_TEXT, PRIVACY_POLICY } from "../../data/legal";
 import {
   LEAD_FIELD_ORDER,
   LEAD_LIMITS,
@@ -42,6 +43,10 @@ export function ContactSection({ compact = false, id }: Props) {
      страницы, поэтому правится один раз для всего сайта. */
   const { texts } = useLoaderData({ from: "__root__" });
   const [status, setStatus] = useState<Status>("idle");
+  /* Согласие — отдельное состояние, а не чтение из FormData при отправке:
+     от него зависит доступность кнопки. Начальное значение — всегда
+     «не дано»: предустановленная галочка согласием не считается. */
+  const [consent, setConsent] = useState(false);
   const [errors, setErrors] = useState<LeadErrors>({});
   const [failure, setFailure] = useState<string | null>(null);
   const fieldPrefix = useId();
@@ -67,6 +72,7 @@ export function ContactSection({ compact = false, id }: Props) {
       task: data.get("task"),
       page: window.location.pathname + window.location.search,
       source: readAttribution(),
+      consent,
     });
 
     const found = validateLead(lead);
@@ -107,6 +113,7 @@ export function ContactSection({ compact = false, id }: Props) {
       }
 
       form.reset();
+      setConsent(false);
       setStatus("sent");
       toast.success("Заявка отправлена", {
         description: "Свяжемся в течение рабочего дня в Telegram или по телефону.",
@@ -127,6 +134,7 @@ export function ContactSection({ compact = false, id }: Props) {
   }
 
   const sending = status === "sending";
+  const consentId = fieldId("consent");
 
   /* Ровно три пункта, без возможности добавить. Список стоит колонкой
      рядом с формой и выровнен с ней по высоте: четвёртый пункт вытянул бы
@@ -232,9 +240,49 @@ export function ContactSection({ compact = false, id }: Props) {
             )}
           </div>
 
+          {/* Согласие на обработку данных. Именно чекбокс, а не строка
+              «нажимая, вы соглашаетесь»: с 01.09.2025 согласие должно быть
+              оформлено отдельно от других документов и действий (ч. 1 ст. 9
+              152-ФЗ). Галочка пустая по умолчанию, кнопка без неё выключена.
+              Ссылки открываются в новой вкладке — иначе человек уйдёт читать
+              и потеряет набранный текст. */}
+          <div>
+            <label htmlFor={consentId} className="flex cursor-pointer items-start gap-3 text-sm">
+              <input
+                id={consentId}
+                name="consent"
+                type="checkbox"
+                checked={consent}
+                onChange={(event) => {
+                  setConsent(event.target.checked);
+                  clearError("consent");
+                }}
+                aria-invalid={errors.consent ? true : undefined}
+                aria-describedby={errors.consent ? `${consentId}-error` : undefined}
+                className="mt-0.5 h-4 w-4 shrink-0 cursor-pointer rounded border-input accent-accent"
+              />
+              <span className="text-foreground/90">
+                Даю{" "}
+                <Link
+                  to={CONSENT_TEXT.path}
+                  target="_blank"
+                  rel="noopener"
+                  className="underline decoration-foreground/30 underline-offset-2 transition hover:text-accent hover:decoration-accent"
+                >
+                  согласие на обработку персональных данных
+                </Link>
+              </span>
+            </label>
+            {errors.consent && (
+              <p id={`${consentId}-error`} className="mt-1.5 text-xs text-destructive">
+                {errors.consent}
+              </p>
+            )}
+          </div>
+
           <button
             type="submit"
-            disabled={sending}
+            disabled={sending || !consent}
             className="w-full inline-flex h-12 items-center justify-center gap-2 rounded-lg bg-accent text-accent-foreground text-sm font-medium transition hover:brightness-110 disabled:opacity-70 disabled:cursor-not-allowed"
           >
             {sending ? "Отправляем…" : texts["contact.submit"]}
@@ -267,7 +315,21 @@ export function ContactSection({ compact = false, id }: Props) {
             </div>
           )}
 
-          <p className="text-xs text-muted-foreground text-center">{texts["contact.consent"]}</p>
+          {/* Политика — рядом с формой, а не только в подвале: ч. 2 ст. 18.1
+              152-ФЗ требует публиковать её на страницах, где собираются
+              данные. Без галочки: ознакомление с политикой — не согласие,
+              и смешивать их в одну отметку нельзя. */}
+          <p className="text-xs text-muted-foreground text-center">
+            Как мы храним и защищаем данные —{" "}
+            <Link
+              to={PRIVACY_POLICY.path}
+              target="_blank"
+              rel="noopener"
+              className="underline decoration-muted-foreground/40 underline-offset-2 transition hover:text-foreground"
+            >
+              в политике обработки персональных данных
+            </Link>
+          </p>
         </form>
       </div>
     </section>

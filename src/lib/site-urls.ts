@@ -24,6 +24,10 @@ const STATIC_PAGES: SiteUrl[] = [
   { path: "/industries", priority: 0.7, changefreq: "monthly" },
   { path: "/faq", priority: 0.6, changefreq: "monthly" },
   { path: "/contacts", priority: 0.7, changefreq: "yearly" },
+  /* Документы — в карте сайта, но с низким приоритетом: их ищут не через
+     поиск, а по ссылке с формы. Скрывать их от индексации незачем. */
+  { path: "/privacy", priority: 0.2, changefreq: "yearly" },
+  { path: "/consent", priority: 0.2, changefreq: "yearly" },
 ];
 
 /** Страницы услуг: `/services/websites` и `/services/bots` уже есть выше. */

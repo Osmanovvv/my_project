@@ -1,0 +1,3 @@
+# Скрипты и юниты уходят на Linux-сервер: CRLF сломал бы #!/bin/sh
+deploy/** text eol=lf
+*.sh text eol=lf

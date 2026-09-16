@@ -392,6 +392,10 @@ function LeadDetail({ lead, onClose }: { lead: LeadRecord; onClose: () => void }
       <dl className="mt-4 grid gap-x-4 gap-y-2 text-xs sm:grid-cols-2">
         <Meta label="Страница" value={lead.page || "—"} />
         <Meta label="Источник" value={formatSource(lead.source)} />
+        {/* Факт согласия — здесь, а не в отдельном отчёте: если человек
+            спросит «на что я соглашался», ответ должен быть под рукой
+            вместе с самой заявкой. */}
+        <Meta label="Согласие на обработку" value={formatConsent(lead)} />
       </dl>
 
       {lead.delivered === 0 && (
@@ -463,6 +467,13 @@ function LeadDetail({ lead, onClose }: { lead: LeadRecord; onClose: () => void }
       </button>
     </article>
   );
+}
+
+/** «16.09.2026 14:05, редакция от 2026-09-16» или честное «не зафиксировано». */
+function formatConsent(lead: LeadRecord): string {
+  if (!lead.consent_at) return "не зафиксировано (заявка до появления галочки)";
+  const when = format(lead.consent_at, "dd.MM.yyyy HH:mm", { locale: ru });
+  return lead.consent_version ? `${when}, редакция от ${lead.consent_version}` : when;
 }
 
 function Meta({ label, value }: { label: string; value: string }) {

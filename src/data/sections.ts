@@ -215,12 +215,8 @@ export const SECTIONS: Section[] = [
       },
       {
         title: "Форма",
-        fields: [
-          t("contact.taskPlaceholder"),
-          t("contact.submit"),
-          t("contact.success"),
-          t("contact.consent"),
-        ],
+        note: "Галочка согласия и ссылки на документы под формой не правятся: это юридический текст, см. раздел «Оператор данных»",
+        fields: [t("contact.taskPlaceholder"), t("contact.submit"), t("contact.success")],
       },
     ],
   },
@@ -396,6 +392,20 @@ export const SECTIONS: Section[] = [
     path: "/",
     note: "Строка о студии рядом с маскотом",
     blocks: [{ fields: [t("footer.tagline")] }],
+  },
+
+  {
+    slug: "operator",
+    label: "Оператор данных",
+    place: "Общее для всего сайта",
+    path: "/privacy",
+    note: "Кто назван оператором в политике и согласии. Пока пусто — документы называют оператором студию. До запуска заполнить: на боевом сайте оператором должен быть конкретный человек или ИП. Почта для обращений берётся из раздела «Контакты».",
+    blocks: [
+      {
+        fields: [t("legal.operator.name"), t("legal.operator.status"), t("legal.operator.inn")],
+      },
+    ],
+    related: { label: "Почта для обращений по данным", to: "/admin/content/contacts" },
   },
 ];
 

@@ -51,6 +51,11 @@ export function SiteFooter() {
             <Link to="/contacts" className="-my-2 py-2 hover:text-foreground transition">
               Контакты
             </Link>
+            {/* Политика — с каждой страницы, не только с формы: постоянная
+                ссылка на документ — требование ч. 2 ст. 18.1 152-ФЗ. */}
+            <Link to="/privacy" className="-my-2 py-2 hover:text-foreground transition">
+              Политика данных
+            </Link>
           </nav>
         </div>
       </div>

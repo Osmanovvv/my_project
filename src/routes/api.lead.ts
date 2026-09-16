@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 
 import { normalizeLead, validateLead, type Lead } from "../lib/lead";
 import { formatLeadMessage, readTelegramConfig, sendTelegramMessage } from "../lib/telegram.server";
-import { insertLead, markDelivery } from "../server/leads.server";
+import { insertLead, markDelivery, purgeExpiredLeads } from "../server/leads.server";
 
 /**
  * POST /api/lead — приём заявки: сохранение в базу и доставка в Telegram.
@@ -15,7 +15,8 @@ import { insertLead, markDelivery } from "../server/leads.server";
  * Ответы:
  *   200 { ok: true }                            — заявка принята хотя бы одним каналом
  *   400/413/415 { ok: false, error }            — некорректный запрос
- *   422 { ok: false, error, fields }            — ошибки полей
+ *   422 { ok: false, error, fields }            — ошибки полей, включая
+ *                                                 не отмеченное согласие
  *   429 { ok: false, error: "rate_limited" }
  *   502 { ok: false, error: "delivery_failed" } — не сохранилась И не доставилась
  *
@@ -33,11 +34,24 @@ const RATE_LIMIT = { windowMs: 60_000, maxRequests: 3, maxKeys: 500 };
 /**
  * Ограничение частоты — best effort. На serverless-рантайме память живёт
  * в пределах инстанса, поэтому это защита от случайного спама, а не от атаки.
+ *
+ * IP-адрес — персональные данные, и политика обещает держать его в памяти
+ * не дольше минуты. Поэтому просроченные адреса вычищаются при КАЖДОМ
+ * вызове, а не только когда таблица переполнится: раньше адрес единственного
+ * за день посетителя лежал здесь до перезапуска процесса. Таблица маленькая
+ * (не больше `maxKeys`), обход дешёвый.
  */
 const recentHits = new Map<string, number[]>();
 
 function isRateLimited(key: string): boolean {
   const now = Date.now();
+
+  for (const [otherKey, hits] of recentHits) {
+    if (otherKey !== key && hits.every((at) => now - at >= RATE_LIMIT.windowMs)) {
+      recentHits.delete(otherKey);
+    }
+  }
+
   const fresh = (recentHits.get(key) ?? []).filter((at) => now - at < RATE_LIMIT.windowMs);
 
   if (fresh.length >= RATE_LIMIT.maxRequests) {
@@ -48,15 +62,21 @@ function isRateLimited(key: string): boolean {
   fresh.push(now);
   recentHits.set(key, fresh);
 
+  /* Страховка от наплыва разных адресов: всё равно не держим больше maxKeys. */
   if (recentHits.size > RATE_LIMIT.maxKeys) {
-    for (const [otherKey, hits] of recentHits) {
-      if (hits.every((at) => now - at >= RATE_LIMIT.windowMs)) recentHits.delete(otherKey);
-    }
+    const oldest = recentHits.keys().next().value;
+    if (oldest !== undefined) recentHits.delete(oldest);
   }
 
   return false;
 }
 
+/**
+ * Адрес посетителя — из заголовков прокси. Nginx перед приложением ОБЯЗАН
+ * пробрасывать X-Forwarded-For (см. DEPLOY.md), иначе все посетители
+ * окажутся в одной корзине "unknown" и лимит «3 в минуту» станет общим
+ * на весь сайт: четвёртый человек за минуту получит отказ.
+ */
 function clientKey(request: Request): string {
   const headers = request.headers;
   const forwarded = headers.get("x-forwarded-for")?.split(",")[0]?.trim();
@@ -70,10 +90,23 @@ function json(body: unknown, status: number): Response {
   });
 }
 
-/** В лог — только то, что нужно, чтобы связаться с клиентом вручную. */
-function logLead(reason: string, lead: Lead, detail?: string): void {
+/**
+ * В лог — содержимое заявки ТОЛЬКО если она не записалась в базу: тогда
+ * журнал — последняя копия, и потерять её значит потерять клиента.
+ *
+ * Если заявка в базе, в журнал идёт её номер и причина. Раньше имя,
+ * контакт и текст задачи печатались и при ненастроенном Telegram — то есть
+ * в штатном режиме персональные данные копились в journald без срока,
+ * а политика обещала, что журналы содержат только адрес и время.
+ */
+function logLead(reason: string, lead: Lead, leadId: number, detail?: string): void {
+  const why = `[lead] ${reason}${detail ? ` (${detail})` : ""}`;
+  if (leadId) {
+    console.error(`${why} — заявка №${leadId} сохранена в базе`);
+    return;
+  }
   console.error(
-    `[lead] ${reason}${detail ? ` (${detail})` : ""} — ` +
+    `${why} — В БАЗУ НЕ ЗАПИСАНА, единственная копия здесь: ` +
       `имя: ${lead.name}; контакт: ${lead.contact}; страница: ${lead.page}; задача: ${lead.task || "—"}`,
   );
 }
@@ -117,21 +150,30 @@ async function handleLead({ request }: { request: Request }): Promise<Response> 
   let leadId = 0;
   try {
     leadId = insertLead(lead);
+    /* Срок хранения из политики поддерживается здесь же: новая заявка —
+       повод убрать те, что старше трёх лет. Сбой чистки не должен
+       мешать приёму, поэтому она в своём try. */
+    try {
+      const purged = purgeExpiredLeads();
+      if (purged > 0) console.log(`[lead] удалено заявок старше срока хранения: ${purged}`);
+    } catch (error) {
+      console.error("[lead] чистка старых заявок не удалась", error);
+    }
   } catch (error) {
-    logLead("не удалось записать в базу", lead, String(error));
+    logLead("не удалось записать в базу", lead, 0, String(error));
   }
 
   /* Шаг 2. Уведомление. */
   const config = readTelegramConfig();
   if (!config) {
-    logLead("Telegram не настроен: нет TELEGRAM_BOT_TOKEN или TELEGRAM_CHAT_ID", lead);
+    logLead("Telegram не настроен: нет TELEGRAM_BOT_TOKEN или TELEGRAM_CHAT_ID", lead, leadId);
     if (leadId) markDelivery(leadId, false, "не настроен TELEGRAM_BOT_TOKEN/TELEGRAM_CHAT_ID");
     return leadId ? json({ ok: true }, 200) : json({ ok: false, error: "delivery_failed" }, 502);
   }
 
   const result = await sendTelegramMessage(config, formatLeadMessage(lead));
   if (!result.ok) {
-    logLead("не доставлено в Telegram", lead, result.detail);
+    logLead("не доставлено в Telegram", lead, leadId, result.detail);
     if (leadId) markDelivery(leadId, false, result.detail ?? "неизвестная ошибка");
     return leadId ? json({ ok: true }, 200) : json({ ok: false, error: "delivery_failed" }, 502);
   }

@@ -93,6 +93,9 @@ export const SEO_PAGES: SeoPage[] = [
   { path: "/services/bots/max", slug: "max", label: "MAX-бот", group: "Страницы услуг" },
   { path: "/services/bots/miniapp", slug: "miniapp", label: "MiniApp", group: "Страницы услуг" },
   { path: "/services/support", slug: "support", label: "Поддержка и SEO", group: "Страницы услуг" },
+
+  { path: "/privacy", slug: "privacy", label: "Политика обработки данных", group: "Документы" },
+  { path: "/consent", slug: "consent", label: "Согласие на обработку данных", group: "Документы" },
 ];
 
 export function seoPageBySlug(slug: string): SeoPage | null {
@@ -230,6 +233,20 @@ export const SEO_DEFAULTS: Record<string, SeoEntry> = {
     description: "Мониторинг 24/7, SEO, аналитика, доработки. Сайт не ломается и растёт в поиске.",
     socialTitle: "Поддержка и SEO — IT-Agent",
     socialDescription: "Сопровождение сайтов и ботов: мониторинг, SEO, аналитика, правки.",
+  },
+  "/privacy": {
+    title: "Политика обработки персональных данных — IT-Agent",
+    description:
+      "Какие данные собирает сайт IT-Agent, зачем, где они хранятся, как их уточнить или удалить и как отозвать согласие.",
+    socialTitle: "",
+    socialDescription: "",
+  },
+  "/consent": {
+    title: "Согласие на обработку персональных данных — IT-Agent",
+    description:
+      "Текст согласия, которое посетитель даёт при отправке заявки на сайте IT-Agent: какие данные, с какой целью, на какой срок и как отозвать.",
+    socialTitle: "",
+    socialDescription: "",
   },
 };
 

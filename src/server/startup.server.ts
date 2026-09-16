@@ -32,6 +32,8 @@
 import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
+import { purgeExpiredLeads } from "./leads.server";
+
 /** Ключи, из-за которых сайт работает не полностью. */
 const REQUIRED_FOR_LEADS = ["TELEGRAM_BOT_TOKEN", "TELEGRAM_CHAT_ID"] as const;
 
@@ -68,6 +70,32 @@ function loadEnvFile(): string | null {
     /* Нет прав, нет файловой системы, битый файл — не повод не стартовать. */
     return null;
   }
+}
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+/**
+ * Срок хранения заявок поддерживается и без новых заявок.
+ *
+ * `purgeExpiredLeads` зовётся ещё и при каждой принятой заявке, но сайт
+ * может месяцами не получать ни одной — а политика обещает «не дольше
+ * трёх лет» безусловно. Поэтому чистка идёт при первом запросе после
+ * запуска и дальше раз в сутки. `unref`: таймер не держит процесс живым.
+ */
+export function scheduleLeadRetention(): void {
+  if (typeof process === "undefined" || !process.versions?.node) return;
+
+  const sweep = () => {
+    try {
+      const purged = purgeExpiredLeads();
+      if (purged > 0) console.log(`[lead] удалено заявок старше срока хранения: ${purged}`);
+    } catch (error) {
+      console.error("[lead] чистка старых заявок не удалась", error);
+    }
+  };
+
+  sweep();
+  setInterval(sweep, DAY_MS).unref();
 }
 
 /** Одна строка на настройку: что включено, что нет и чем это грозит. */

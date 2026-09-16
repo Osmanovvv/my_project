@@ -1,0 +1,36 @@
+# Ежедневная резервная копия базы и фотографий.
+#
+# Политика обработки данных на сайте обещает: «копии создаются ежедневно
+# и хранятся 30 дней». Этот юнит с таймером — то, чем обещание обеспечено.
+#
+# Установка (вместе с таймером):
+#   chmod +x /srv/itagent/deploy/itagent-backup.sh
+#   sudo cp deploy/itagent-backup.service deploy/itagent-backup.timer /etc/systemd/system/
+#   sudo mkdir -p /var/backups/itagent && sudo chown itagent:itagent /var/backups/itagent
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now itagent-backup.timer
+#   sudo systemctl start itagent-backup.service        ← первая копия сразу, не ждать ночи
+#   ls -la /var/backups/itagent                          ← должен появиться архив
+#
+# Нужен sqlite3: sudo apt install sqlite3
+#
+# Сам сценарий — deploy/itagent-backup.sh, его можно запустить и руками.
+
+[Unit]
+Description=IT-Agent — резервная копия базы и медиа
+After=itagent.service
+
+[Service]
+Type=oneshot
+User=itagent
+Group=itagent
+
+Environment=DATA_DIR=/var/lib/itagent
+Environment=BACKUP_DIR=/var/backups/itagent
+
+ExecStart=/srv/itagent/deploy/itagent-backup.sh
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/backups/itagent

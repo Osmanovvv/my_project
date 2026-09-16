@@ -14,7 +14,7 @@ export const LEAD_LIMITS = {
   source: { max: 500 },
 } as const;
 
-export type LeadField = "name" | "contact" | "task";
+export type LeadField = "name" | "contact" | "task" | "consent";
 
 export type Lead = {
   name: string;
@@ -25,6 +25,15 @@ export type Lead = {
   page: string;
   /** UTM-метки и реферер, собранные при заходе. */
   source: string;
+  /**
+   * Согласие на обработку данных — отмечено ли поле на форме.
+   *
+   * Проверяется и здесь, и на сервере: кнопка отправки без галочки
+   * выключена, но форму можно отправить и мимо кнопки, а серверу
+   * доверять клиентской проверке нельзя. Без согласия заявка
+   * не принимается — иначе данные обрабатывались бы без основания.
+   */
+  consent: boolean;
 };
 
 export type LeadErrors = Partial<Record<LeadField, string>>;
@@ -62,6 +71,9 @@ export function normalizeLead(raw: unknown): Lead {
     task: cleanText(input.task),
     page: cleanLine(input.page).slice(0, LEAD_LIMITS.page.max),
     source: cleanLine(input.source).slice(0, LEAD_LIMITS.source.max),
+    /* Строго `true`, а не «что-нибудь истинное»: строка "false" или
+       единица из чужого запроса не должны сходить за согласие. */
+    consent: input.consent === true,
   };
 }
 
@@ -90,8 +102,12 @@ export function validateLead(lead: Lead): LeadErrors {
     errors.task = `Сократите до ${LEAD_LIMITS.task.max} символов`;
   }
 
+  if (!lead.consent) {
+    errors.consent = "Отметьте согласие на обработку данных";
+  }
+
   return errors;
 }
 
 /** Порядок полей для автофокуса на первой ошибке. */
-export const LEAD_FIELD_ORDER: LeadField[] = ["name", "contact", "task"];
+export const LEAD_FIELD_ORDER: LeadField[] = ["name", "contact", "task", "consent"];

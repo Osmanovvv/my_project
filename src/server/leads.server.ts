@@ -12,6 +12,7 @@
 
 import { all, get, run } from "./db.server";
 import type { Lead } from "../lib/lead";
+import { LEAD_RETENTION_YEARS, LEGAL_VERSION } from "../data/legal";
 
 export const LEAD_STATUSES = ["new", "in_progress", "won", "lost", "spam"] as const;
 export type LeadStatus = (typeof LEAD_STATUSES)[number];
@@ -38,7 +39,14 @@ export type LeadRecord = {
   read_at: number | null;
   delivered: 0 | 1;
   delivery_error: string;
+  /** Когда дано согласие на обработку. NULL — заявка до появления чекбокса. */
+  consent_at: number | null;
+  /** Дата редакции текста согласия, действовавшей в момент отправки. */
+  consent_version: string;
 };
+
+/** Срок хранения заявок в миллисекундах — то, что обещано в политике. */
+const RETENTION_MS = LEAD_RETENTION_YEARS * 365 * 24 * 60 * 60 * 1000;
 
 /**
  * Сохранить заявку. Возвращает id, по которому потом отмечается доставка.
@@ -48,12 +56,35 @@ export type LeadRecord = {
  * что заявка принята.
  */
 export function insertLead(lead: Lead): number {
+  /* Запись о согласии — доказательство. Функция не должна уметь его
+     сфабриковать: вызов без согласия — ошибка вызывающего, а не заявка. */
+  if (lead.consent !== true) throw new Error("заявка без согласия на обработку данных");
+
+  const now = Date.now();
+  /* Согласие записывается тем же временем, что и заявка: это одно
+     действие посетителя. Редакция — та, что опубликована на сайте
+     этой же сборкой; клиент её не присылает, потому что присланному
+     верить нельзя, а другой редакции у него и быть не могло. */
   const { lastId } = run(
-    `INSERT INTO lead (created_at, name, contact, task, page, source)
-     VALUES (?, ?, ?, ?, ?, ?)`,
-    [Date.now(), lead.name, lead.contact, lead.task, lead.page, lead.source],
+    `INSERT INTO lead (created_at, name, contact, task, page, source, consent_at, consent_version)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+    [now, lead.name, lead.contact, lead.task, lead.page, lead.source, now, LEGAL_VERSION],
   );
   return lastId;
+}
+
+/**
+ * Удаляет заявки старше срока хранения.
+ *
+ * Политика обещает: «заявки старше трёх лет удаляются автоматически».
+ * Обещание в документе, за которым не стоит код, — это ложь с отсрочкой.
+ * Зовётся при каждой новой заявке: отдельного планировщика у процесса
+ * нет, а сайт без заявок и хранить нечего. Запрос дешёвый — индекс
+ * по created_at есть с первой миграции.
+ */
+export function purgeExpiredLeads(now: number = Date.now()): number {
+  const { changes } = run("DELETE FROM lead WHERE created_at < ?", [now - RETENTION_MS]);
+  return changes;
 }
 
 /** Отметить результат доставки в Telegram. */
@@ -134,4 +165,7 @@ export function markRead(id: number): void {
 
 export function deleteLead(id: number): void {
   run("DELETE FROM lead WHERE id = ?", [id]);
+  /* Удаление — событие, которое политика обещает журналировать. Номер,
+     не содержимое: содержимого в журнале быть не должно. */
+  console.log(`[admin] заявка №${id} удалена`);
 }
