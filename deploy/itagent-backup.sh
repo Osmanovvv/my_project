@@ -17,6 +17,10 @@ trap 'rm -rf "$tmp"' EXIT
 sqlite3 "$DATA_DIR/content.db" "VACUUM INTO '$tmp/content.db'"
 tar czf "$BACKUP_DIR/itagent-$stamp.tar.gz" -C "$tmp" content.db -C "$DATA_DIR" media
 
-find "$BACKUP_DIR" -name 'itagent-*.tar.gz' -mtime +"$KEEP_DAYS" -delete
+# -mtime +N у find означает «старше N+1 суток», поэтому N-1: копия исполнилось
+# 30 дней — удаляется на ближайшем прогоне. Снимки перед выкладкой
+# (release.sh) живут по тому же правилу.
+find "$BACKUP_DIR" \( -name 'itagent-*.tar.gz' -o -name 'before-release-*.db' \) \
+  -mtime +"$((KEEP_DAYS - 1))" -delete
 
 echo "копия сохранена: $BACKUP_DIR/itagent-$stamp.tar.gz"

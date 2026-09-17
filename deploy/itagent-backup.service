@@ -4,7 +4,6 @@
 # и хранятся 30 дней». Этот юнит с таймером — то, чем обещание обеспечено.
 #
 # Установка (вместе с таймером):
-#   chmod +x /srv/itagent/deploy/itagent-backup.sh
 #   sudo cp deploy/itagent-backup.service deploy/itagent-backup.timer /etc/systemd/system/
 #   sudo mkdir -p /var/backups/itagent && sudo chown itagent:itagent /var/backups/itagent
 #   sudo systemctl daemon-reload
@@ -14,7 +13,8 @@
 #
 # Нужен sqlite3: sudo apt install sqlite3
 #
-# Сам сценарий — deploy/itagent-backup.sh, его можно запустить и руками.
+# Сам сценарий — deploy/itagent-backup.sh; install.sh кладёт его
+# в /usr/local/sbin/itagent-backup.sh, оттуда его можно запустить и руками.
 
 [Unit]
 Description=IT-Agent — резервная копия базы и медиа
@@ -28,9 +28,14 @@ Group=itagent
 Environment=DATA_DIR=/var/lib/itagent
 Environment=BACKUP_DIR=/var/backups/itagent
 
-ExecStart=/srv/itagent/deploy/itagent-backup.sh
+ExecStart=/usr/local/sbin/itagent-backup.sh
+UMask=0027
 NoNewPrivileges=true
 PrivateTmp=true
 ProtectSystem=strict
 ProtectHome=true
-ReadWritePaths=/var/backups/itagent
+# Каталог данных тоже на запись: SQLite при открытии базы в режиме WAL
+# создаёт рядом -shm/-wal, и если приложение в этот момент не запущено,
+# на read-only каталоге снимок падает. Прав это не добавляет — владелец
+# каталога и так itagent.
+ReadWritePaths=/var/backups/itagent /var/lib/itagent
