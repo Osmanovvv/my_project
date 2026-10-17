@@ -24,6 +24,10 @@ dist-ssr
 .env
 .env.*
 !.env.example
+!.env.development.example
+!.env.production.example
+!.env.docker.example
+!.env.staging.example
 
 # Каталог данных: база SQLite с заявками и контентом плюс загруженные картинки.
 # Это боевые данные и персональные контакты клиентов — в репозиторий они
@@ -51,3 +55,13 @@ lh-*.json
 lh-*.txt
 g-*.json
 f-*.json
+
+# Личные подтверждения согласия из переписки — не отправлять в Git.
+private/portfolio-permission-evidence/
+
+# Посторонние артефакты, к сайту не относятся: сборка презентации
+# (.codex-build, presentation-output) и отчёты ручных проверок Playwright.
+.codex-build/
+presentation-output/
+output/
+.playwright-cli/
