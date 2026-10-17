@@ -17,9 +17,11 @@ ssh -t root@itagent.ru bash /srv/itagent/deploy/install.sh
 пароль админки.
 
 `install.sh` ставит nginx, Node 24, заводит пользователя и каталоги,
-спрашивает пароль админки и токен бота, а webhook secret генерирует сам
-(кладёт их в `/etc/itagent/env`),
-ставит юниты, срок журналов 30 дней, файрвол и сертификат Let's Encrypt.
+спрашивает пароль админки, токен бота, ID чата для уведомлений и ваш
+Telegram ID оператора — то же число, что `TELEGRAM_OPERATOR_IDS`
+в локальном `.env`. Webhook secret генерирует сам; всё это кладёт
+в `/etc/itagent/env`. Затем ставит юниты, срок журналов 30 дней,
+файрвол и сертификат Let's Encrypt.
 Повторный запуск ничего не ломает. Проверен на чистом Ubuntu 24.04.
 
 Затем сам сайт:
@@ -172,14 +174,14 @@ location / {
 | `TELEGRAM_DELIVERY_ENABLED`       | разрешить отправку в Telegram                | в development отправка заблокирована                                             |
 | `TELEGRAM_BOT_TOKEN`              | уведомления о заявках                        | заявка сохранится, уведомления не будет                                          |
 | `TELEGRAM_CHAT_ID`                | куда слать уведомления                       | то же                                                                            |
-| `TELEGRAM_BOT_USERNAME`           | публичный username бота для deep-link        | ссылка «Продолжить в Telegram» не показывается                                   |
+| `TELEGRAM_BOT_USERNAME`           | публичный username бота для deep-link        | берётся `ITagent_bot`                                                            |
 | `TELEGRAM_OPERATOR_NOTIFICATIONS` | направлять заявки в личное меню оператора    | сохраняется старый маршрут через `TELEGRAM_CHAT_ID`                              |
 | `TELEGRAM_OPERATOR_IDS`           | разрешённые Telegram user ID операторов      | операторское меню недоступно                                                     |
-| `TELEGRAM_OPERATOR_CHAT_ID`       | подтверждённый личный чат оператора          | контрольные уведомления оператора некуда отправлять                              |
+| `TELEGRAM_OPERATOR_CHAT_ID`       | подтверждённый личный чат оператора          | операторское меню недоступно: доступ требует и ID, и этот чат                    |
 | `TELEGRAM_TEST_USER_IDS`          | разрешённые тестовые Telegram user ID        | тестовые входящие не изолируются явно                                            |
 | `TELEGRAM_WEBHOOK_SECRET`         | секрет входящего webhook                     | webhook не принимается                                                           |
 | `VITE_SITE_URL`                   | адрес сайта для canonical, og:image, sitemap | берётся `https://itagent.ru`                                                     |
-| `TELEGRAM_MINIAPP_URL`            | публичный HTTPS-адрес Mini App               | используется `VITE_SITE_URL/miniapp`                                             |
+| `TELEGRAM_MINIAPP_URL`            | публичный HTTPS-адрес Mini App               | используется `https://itagent.ru/miniapp`                                        |
 
 `VITE_SITE_URL` вшивается в бандл **на этапе сборки** — задавать её нужно
 до `bun run build`, а не при запуске сервера.
@@ -201,12 +203,21 @@ node deploy/check-telegram-webhook.mjs https://itagent.ru
 webhook и отказ POST без secret. Скрипт не вызывает Telegram `setWebhook`;
 регистрация выполняется отдельно на шаге 10.7 после подтверждения релиза.
 
-После preflight webhook регистрируется отдельным скриптом с production env:
+После preflight webhook регистрируется отдельным скриптом с production env.
+Скрипты из `deploy/` читают настройки из окружения процесса; на сервере
+боевой файл им передаёт сам Node. Команды — на сервере, от root:
 
 ```bash
-node deploy/set-telegram-webhook.mjs       # только dry-run
-node deploy/set-telegram-webhook.mjs --apply
+cd /srv/itagent
+node --env-file=/etc/itagent/env deploy/validate-production-env.mjs
+node --env-file=/etc/itagent/env deploy/set-telegram-webhook.mjs          # только dry-run
+node --env-file=/etc/itagent/env deploy/set-telegram-webhook.mjs --apply
 ```
+
+Не `source /etc/itagent/env`: bash выполнил бы значения как код, и пароль
+с пробелом или `$(…)` сломал бы команду. Каталог `deploy/` на сервере —
+копия на момент установки; если скрипты с тех пор менялись, сначала
+с ноутбука: `scp -r deploy root@itagent.ru:/srv/itagent/`.
 
 Скрипт требует `APP_ENV=production`, HTTPS и сильный secret. Он передаёт только
 `message` и `callback_query` и не удаляет накопленные pending updates.
@@ -226,13 +237,8 @@ node deploy/production-smoke.mjs https://itagent.ru --require-webhook-activity
 Полный ручной сценарий `/start → заявка → ответ оператора` и команды просмотра
 логов описаны в `docs/PRODUCTION_SMOKE_TEST.md`.
 
-Перед передачей production env на сервер выполните проверку без вывода
-секретов:
-
-```bash
-node deploy/validate-production-env.mjs
-```
-
+Проверка боевых переменных — первая команда в блоке выше
+(`validate-production-env.mjs`); значений секретов она не выводит.
 Она проверяет `APP_ENV`, каталог данных, HTTPS-адреса, форматы Telegram token и
 chat ID, сильный webhook secret и операторские allowlist. Сам `/etc/itagent/env`
 создаётся `install.sh` на сервере и в репозиторий не копируется.
@@ -254,7 +260,7 @@ ID из `TELEGRAM_TEST_USER_IDS` или `TELEGRAM_OPERATOR_IDS`; в production
 сервере с production-переменными):
 
 ```bash
-node deploy/setup-telegram-miniapp.mjs
+node --env-file=/etc/itagent/env deploy/setup-telegram-miniapp.mjs
 ```
 
 Скрипт задаёт клиентское меню и кнопку Mini App по умолчанию. Для
@@ -263,13 +269,14 @@ node deploy/setup-telegram-miniapp.mjs
 сетевым вызовом конфигурацию можно проверить так:
 
 ```bash
-node deploy/setup-telegram-miniapp.mjs --dry-run
+node --env-file=/etc/itagent/env deploy/setup-telegram-miniapp.mjs --dry-run
 ```
 
 Для нового маршрута сайта в личный чат оператора сначала задайте
 `TELEGRAM_OPERATOR_IDS` и подтверждённый private `TELEGRAM_OPERATOR_CHAT_ID`,
 проверьте тестовую заявку и только после этого включите
-`TELEGRAM_OPERATOR_NOTIFICATIONS=true`. Пока флаг выключен либо операторский
+`TELEGRAM_OPERATOR_NOTIFICATIONS=true` (в `/etc/itagent/env`, затем
+`systemctl restart itagent`). Пока флаг выключен либо операторский
 чат не настроен, форма продолжает работать через `TELEGRAM_CHAT_ID`.
 
 Подробное описание меню оператора, проверки Telegram ID, внутренних заметок и

@@ -99,11 +99,31 @@ else
     need_tty TELEGRAM_CHAT_ID
     read -r -p "ID чата для уведомлений (Enter — пока без Telegram): " TELEGRAM_CHAT_ID
   fi
-  # Операторские значения необязательны на первом деплое: меню включится
-  # только после явной настройки allowlist и личного chat ID.
+  # Меню оператора /admin бот открывает только тому, чей Telegram ID есть
+  # в TELEGRAM_OPERATOR_IDS, и только в личном чате TELEGRAM_OPERATOR_CHAT_ID.
+  # В личном чате с ботом ID чата совпадает с ID человека, поэтому одному
+  # оператору хватает одного числа. Без терминала не спрашиваем: меню
+  # остаётся выключенным, пока ID не впишут в $ENV_FILE.
+  if [ -z "${TELEGRAM_OPERATOR_IDS+x}" ] && [ -n "$TELEGRAM_BOT_TOKEN" ] && [ -t 0 ]; then
+    while :; do
+      read -r -p "Ваш Telegram ID для меню оператора /admin (Enter — пока без меню): " TELEGRAM_OPERATOR_IDS
+      # [[ =~ ]], а не grep: пустой ответ grep не видит как строку и не пропускает.
+      [[ "$TELEGRAM_OPERATOR_IDS" =~ ^([1-9][0-9]*)?$ ]] && break
+      warn "нужно одно число без пробелов — ваш Telegram ID"
+    done
+  fi
   TELEGRAM_OPERATOR_IDS="${TELEGRAM_OPERATOR_IDS:-}"
-  TELEGRAM_OPERATOR_CHAT_ID="${TELEGRAM_OPERATOR_CHAT_ID:-}"
+  TELEGRAM_OPERATOR_IDS="${TELEGRAM_OPERATOR_IDS// /}"
+  [[ "$TELEGRAM_OPERATOR_IDS" =~ ^([1-9][0-9]*(,[1-9][0-9]*)*)?$ ]] || {
+    echo "TELEGRAM_OPERATOR_IDS — числовые Telegram ID через запятую" >&2
+    exit 1
+  }
+  case "$TELEGRAM_OPERATOR_IDS" in
+    *,*) TELEGRAM_OPERATOR_CHAT_ID="${TELEGRAM_OPERATOR_CHAT_ID:-}" ;;
+    *) TELEGRAM_OPERATOR_CHAT_ID="${TELEGRAM_OPERATOR_CHAT_ID:-$TELEGRAM_OPERATOR_IDS}" ;;
+  esac
   TELEGRAM_TEST_USER_IDS="${TELEGRAM_TEST_USER_IDS:-}"
+  TELEGRAM_OPERATOR_NOTIFICATIONS="${TELEGRAM_OPERATOR_NOTIFICATIONS:-false}"
   # Отдельный webhook secret не совпадает с токеном бота. Если его не передали
   # явно, создаём криптографически случайный секрет прямо на сервере.
   TELEGRAM_WEBHOOK_SECRET="${TELEGRAM_WEBHOOK_SECRET:-$(openssl rand -hex 32)}"
@@ -129,10 +149,17 @@ TELEGRAM_OPERATOR_IDS=$TELEGRAM_OPERATOR_IDS
 TELEGRAM_OPERATOR_CHAT_ID=$TELEGRAM_OPERATOR_CHAT_ID
 TELEGRAM_TEST_USER_IDS=$TELEGRAM_TEST_USER_IDS
 TELEGRAM_WEBHOOK_SECRET=$TELEGRAM_WEBHOOK_SECRET
+# true — заявки с сайта приходят в личное меню оператора в боте, а не
+# в TELEGRAM_CHAT_ID. Включать после проверки меню (DEPLOY.md).
+TELEGRAM_OPERATOR_NOTIFICATIONS=$TELEGRAM_OPERATOR_NOTIFICATIONS
 EOF
   umask 022
   chown root:itagent "$ENV_FILE"; chmod 640 "$ENV_FILE"
-  [ -n "$TELEGRAM_BOT_TOKEN" ] || warn "Telegram не задан: заявки будут только в админке. Впишите токен в $ENV_FILE позже."
+  if [ -z "$TELEGRAM_BOT_TOKEN" ]; then
+    warn "Telegram не задан: заявки будут только в админке. Впишите токен в $ENV_FILE позже."
+  elif [ -z "$TELEGRAM_OPERATOR_CHAT_ID" ]; then
+    warn "Меню оператора выключено: впишите TELEGRAM_OPERATOR_IDS и TELEGRAM_OPERATOR_CHAT_ID в $ENV_FILE."
+  fi
 fi
 
 # ── nginx ─────────────────────────────────────────────────────────────────

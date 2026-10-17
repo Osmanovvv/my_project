@@ -5,7 +5,7 @@
 - Текущий этап: 10
 - Текущий шаг: 10.2
 - Прогресс: 95%
-- Последнее обновление: 2026-10-13
+- Последнее обновление: 2026-10-18
 
 ## Правила работы по плану
 
@@ -1123,6 +1123,12 @@ Telegram ждут появления сервера и публикации пр
 - [ ] 11.8 Подтвердить готовность MVP.
 - [ ] 11.9 Проверить, что оператор не может случайно ответить в закрытый
       или чужой диалог без явного открытия и подтверждения.
+- [ ] 11.10 Mini App в веб-версии Telegram: web.telegram.org открывает её
+      во фрейме, а nginx отдаёт `X-Frame-Options: SAMEORIGIN`, cookie
+      сессии — `SameSite=Lax`. Для `/miniapp` разрешить фрейм с
+      `https://web.telegram.org` (CSP `frame-ancestors`), cookie выдавать
+      с `SameSite=None; Secure; Partitioned`; проверить на production.
+      Мобильные и десктопные клиенты открывают Mini App без фрейма.
 
 ### Проверка этапа 11
 
@@ -1251,6 +1257,7 @@ Telegram ждут появления сервера и публикации пр
 | 2026-10-13 | Проверка этапа 9       | Пройдена локально, этап закрыт                | Все критерии этапа подтверждены: новый/повторный клиент, несколько диалогов, роли и callback, fixed-recipient outbox, дубли, неизвестная и прерванная доставка, резервное восстановление, client-bundle audit, same-origin/body limits, security review; `npm test`: 51/51, `npm run test:typecheck`, `bunx tsc --noEmit`, `bun run lint`, production build, client-bundle audit и `git diff --check` пройдены | Production Telegram, HTTPS, сервер, внешний backup/rollback и фактические переходы остаются этапом 10; этап 8 также ждёт публикации |
 | 2026-10-13 | 10.1–10.7              | 10.1 и 10.3 выполнены локально; 10.5 проверен на локальном staging; остальные ждут сервер | Добавлены `.env.staging.example`, `compose.staging.yaml`, production-env validator без вывода секретов, backup перед миграцией, автогенерация webhook secret в `install.sh`, staging/production release-инструкции и безопасный `set-telegram-webhook.mjs --apply`; staging Docker build прошёл, контейнер вернул `/` 200 и ожидаемый health 503 при выключенном Telegram, `user_version=17`, `integrity_check=ok`; локальная конфигурация проверена без сетевого вызова Telegram | Production env, production backup, release и webhook, а также миграция на отдельном сервере невозможны без доступного сервера; webhook script по умолчанию только dry-run |
 | 2026-10-13 | 10.8–10.10             | Подготовлены локально, фактическая проверка ждёт сервер | Добавлены `deploy/production-smoke.mjs` и `docs/PRODUCTION_SMOKE_TEST.md`: HTTPS Mini App/API boundary, production health, webhook boundary, контроль активности webhook, ручной сценарий `/start → заявка → операторский ответ` и команды проверки systemd/journal | Реальные HTTPS-переходы Mini App, Telegram smoke-test и production logs нельзя подтвердить без опубликованного сервера |
+| 2026-10-18 | Фиксация в git, 10.3   | Выполнено                                    | Работа разложена на шесть коммитов поверх `57a6e51`; каждый коммит с кодом отдельно проходит `tsc --noEmit`, основной — 51/51 тест и `test:typecheck`; значений секретов из `.env` в файлах репозитория нет; блок ID оператора в `install.sh` проверен на 8 сценариях, итоговый env разобран через `node --env-file` | `install.sh` спрашивает Telegram ID оператора и выводит из него личный чат, `TELEGRAM_OPERATOR_NOTIFICATIONS=false` записывается явно; серверные скрипты в DEPLOY.md запускаются через `node --env-file=/etc/itagent/env`; Mini App в веб-версии Telegram вынесена в 11.10 |
 
 ## Команды управления планом
 
