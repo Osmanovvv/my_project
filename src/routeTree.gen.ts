@@ -15,6 +15,7 @@ import { Route as ServicesRouteImport } from './routes/services'
 import { Route as RobotsDottxtRouteImport } from './routes/robots[.]txt'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as PackagesRouteImport } from './routes/packages'
+import { Route as MiniappRouteImport } from './routes/miniapp'
 import { Route as McpRouteImport } from './routes/mcp'
 import { Route as IndustriesRouteImport } from './routes/industries'
 import { Route as FaqRouteImport } from './routes/faq'
@@ -45,6 +46,8 @@ import { Route as ServicesWebsitesCorporateRouteImport } from './routes/services
 import { Route as ServicesBotsTelegramRouteImport } from './routes/services.bots.telegram'
 import { Route as ServicesBotsMiniappRouteImport } from './routes/services.bots.miniapp'
 import { Route as ServicesBotsMaxRouteImport } from './routes/services.bots.max'
+import { Route as ApiTelegramWebhookRouteImport } from './routes/api.telegram.webhook'
+import { Route as ApiTelegramHealthRouteImport } from './routes/api.telegram.health'
 import { Route as AdminContentPackagesRouteImport } from './routes/admin.content.packages'
 import { Route as AdminContentFaqRouteImport } from './routes/admin.content.faq'
 import { Route as AdminContentContactsRouteImport } from './routes/admin.content.contacts'
@@ -54,6 +57,9 @@ import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[
 import { Route as AdminContentServicesIndexRouteImport } from './routes/admin.content.services.index'
 import { Route as AdminContentSeoIndexRouteImport } from './routes/admin.content.seo.index'
 import { Route as AdminContentSectionsIndexRouteImport } from './routes/admin.content.sections.index'
+import { Route as ApiTelegramMiniappSessionRouteImport } from './routes/api.telegram.miniapp.session'
+import { Route as ApiTelegramMiniappLeadsRouteImport } from './routes/api.telegram.miniapp.leads'
+import { Route as ApiTelegramMiniappConversationLinkRouteImport } from './routes/api.telegram.miniapp.conversation-link'
 import { Route as AdminContentServicesSlugRouteImport } from './routes/admin.content.services.$slug'
 import { Route as AdminContentSeoSlugRouteImport } from './routes/admin.content.seo.$slug'
 import { Route as AdminContentSectionsSlugRouteImport } from './routes/admin.content.sections.$slug'
@@ -86,6 +92,11 @@ const PrivacyRoute = PrivacyRouteImport.update({
 const PackagesRoute = PackagesRouteImport.update({
   id: '/packages',
   path: '/packages',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MiniappRoute = MiniappRouteImport.update({
+  id: '/miniapp',
+  path: '/miniapp',
   getParentRoute: () => rootRouteImport,
 } as any)
 const McpRoute = McpRouteImport.update({
@@ -242,6 +253,16 @@ const ServicesBotsMaxRoute = ServicesBotsMaxRouteImport.update({
   path: '/max',
   getParentRoute: () => ServicesBotsRoute,
 } as any)
+const ApiTelegramWebhookRoute = ApiTelegramWebhookRouteImport.update({
+  id: '/api/telegram/webhook',
+  path: '/api/telegram/webhook',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiTelegramHealthRoute = ApiTelegramHealthRouteImport.update({
+  id: '/api/telegram/health',
+  path: '/api/telegram/health',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminContentPackagesRoute = AdminContentPackagesRouteImport.update({
   id: '/content/packages',
   path: '/content/packages',
@@ -290,6 +311,23 @@ const AdminContentSectionsIndexRoute =
     path: '/content/sections/',
     getParentRoute: () => AdminRoute,
   } as any)
+const ApiTelegramMiniappSessionRoute =
+  ApiTelegramMiniappSessionRouteImport.update({
+    id: '/api/telegram/miniapp/session',
+    path: '/api/telegram/miniapp/session',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiTelegramMiniappLeadsRoute = ApiTelegramMiniappLeadsRouteImport.update({
+  id: '/api/telegram/miniapp/leads',
+  path: '/api/telegram/miniapp/leads',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiTelegramMiniappConversationLinkRoute =
+  ApiTelegramMiniappConversationLinkRouteImport.update({
+    id: '/api/telegram/miniapp/conversation-link',
+    path: '/api/telegram/miniapp/conversation-link',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const AdminContentServicesSlugRoute =
   AdminContentServicesSlugRouteImport.update({
     id: '/content/services/$slug',
@@ -316,6 +354,7 @@ export interface FileRoutesByFullPath {
   '/faq': typeof FaqRoute
   '/industries': typeof IndustriesRoute
   '/mcp': typeof McpRoute
+  '/miniapp': typeof MiniappRoute
   '/packages': typeof PackagesRoute
   '/privacy': typeof PrivacyRoute
   '/robots.txt': typeof RobotsDottxtRoute
@@ -341,6 +380,8 @@ export interface FileRoutesByFullPath {
   '/admin/content/contacts': typeof AdminContentContactsRoute
   '/admin/content/faq': typeof AdminContentFaqRoute
   '/admin/content/packages': typeof AdminContentPackagesRoute
+  '/api/telegram/health': typeof ApiTelegramHealthRoute
+  '/api/telegram/webhook': typeof ApiTelegramWebhookRoute
   '/services/bots/max': typeof ServicesBotsMaxRoute
   '/services/bots/miniapp': typeof ServicesBotsMiniappRoute
   '/services/bots/telegram': typeof ServicesBotsTelegramRoute
@@ -354,6 +395,9 @@ export interface FileRoutesByFullPath {
   '/admin/content/sections/$slug': typeof AdminContentSectionsSlugRoute
   '/admin/content/seo/$slug': typeof AdminContentSeoSlugRoute
   '/admin/content/services/$slug': typeof AdminContentServicesSlugRoute
+  '/api/telegram/miniapp/conversation-link': typeof ApiTelegramMiniappConversationLinkRoute
+  '/api/telegram/miniapp/leads': typeof ApiTelegramMiniappLeadsRoute
+  '/api/telegram/miniapp/session': typeof ApiTelegramMiniappSessionRoute
   '/admin/content/sections/': typeof AdminContentSectionsIndexRoute
   '/admin/content/seo/': typeof AdminContentSeoIndexRoute
   '/admin/content/services/': typeof AdminContentServicesIndexRoute
@@ -365,6 +409,7 @@ export interface FileRoutesByTo {
   '/faq': typeof FaqRoute
   '/industries': typeof IndustriesRoute
   '/mcp': typeof McpRoute
+  '/miniapp': typeof MiniappRoute
   '/packages': typeof PackagesRoute
   '/privacy': typeof PrivacyRoute
   '/robots.txt': typeof RobotsDottxtRoute
@@ -386,6 +431,8 @@ export interface FileRoutesByTo {
   '/admin/content/contacts': typeof AdminContentContactsRoute
   '/admin/content/faq': typeof AdminContentFaqRoute
   '/admin/content/packages': typeof AdminContentPackagesRoute
+  '/api/telegram/health': typeof ApiTelegramHealthRoute
+  '/api/telegram/webhook': typeof ApiTelegramWebhookRoute
   '/services/bots/max': typeof ServicesBotsMaxRoute
   '/services/bots/miniapp': typeof ServicesBotsMiniappRoute
   '/services/bots/telegram': typeof ServicesBotsTelegramRoute
@@ -399,6 +446,9 @@ export interface FileRoutesByTo {
   '/admin/content/sections/$slug': typeof AdminContentSectionsSlugRoute
   '/admin/content/seo/$slug': typeof AdminContentSeoSlugRoute
   '/admin/content/services/$slug': typeof AdminContentServicesSlugRoute
+  '/api/telegram/miniapp/conversation-link': typeof ApiTelegramMiniappConversationLinkRoute
+  '/api/telegram/miniapp/leads': typeof ApiTelegramMiniappLeadsRoute
+  '/api/telegram/miniapp/session': typeof ApiTelegramMiniappSessionRoute
   '/admin/content/sections': typeof AdminContentSectionsIndexRoute
   '/admin/content/seo': typeof AdminContentSeoIndexRoute
   '/admin/content/services': typeof AdminContentServicesIndexRoute
@@ -412,6 +462,7 @@ export interface FileRoutesById {
   '/faq': typeof FaqRoute
   '/industries': typeof IndustriesRoute
   '/mcp': typeof McpRoute
+  '/miniapp': typeof MiniappRoute
   '/packages': typeof PackagesRoute
   '/privacy': typeof PrivacyRoute
   '/robots.txt': typeof RobotsDottxtRoute
@@ -437,6 +488,8 @@ export interface FileRoutesById {
   '/admin/content/contacts': typeof AdminContentContactsRoute
   '/admin/content/faq': typeof AdminContentFaqRoute
   '/admin/content/packages': typeof AdminContentPackagesRoute
+  '/api/telegram/health': typeof ApiTelegramHealthRoute
+  '/api/telegram/webhook': typeof ApiTelegramWebhookRoute
   '/services/bots/max': typeof ServicesBotsMaxRoute
   '/services/bots/miniapp': typeof ServicesBotsMiniappRoute
   '/services/bots/telegram': typeof ServicesBotsTelegramRoute
@@ -450,6 +503,9 @@ export interface FileRoutesById {
   '/admin/content/sections/$slug': typeof AdminContentSectionsSlugRoute
   '/admin/content/seo/$slug': typeof AdminContentSeoSlugRoute
   '/admin/content/services/$slug': typeof AdminContentServicesSlugRoute
+  '/api/telegram/miniapp/conversation-link': typeof ApiTelegramMiniappConversationLinkRoute
+  '/api/telegram/miniapp/leads': typeof ApiTelegramMiniappLeadsRoute
+  '/api/telegram/miniapp/session': typeof ApiTelegramMiniappSessionRoute
   '/admin/content/sections/': typeof AdminContentSectionsIndexRoute
   '/admin/content/seo/': typeof AdminContentSeoIndexRoute
   '/admin/content/services/': typeof AdminContentServicesIndexRoute
@@ -464,6 +520,7 @@ export interface FileRouteTypes {
     | '/faq'
     | '/industries'
     | '/mcp'
+    | '/miniapp'
     | '/packages'
     | '/privacy'
     | '/robots.txt'
@@ -489,6 +546,8 @@ export interface FileRouteTypes {
     | '/admin/content/contacts'
     | '/admin/content/faq'
     | '/admin/content/packages'
+    | '/api/telegram/health'
+    | '/api/telegram/webhook'
     | '/services/bots/max'
     | '/services/bots/miniapp'
     | '/services/bots/telegram'
@@ -502,6 +561,9 @@ export interface FileRouteTypes {
     | '/admin/content/sections/$slug'
     | '/admin/content/seo/$slug'
     | '/admin/content/services/$slug'
+    | '/api/telegram/miniapp/conversation-link'
+    | '/api/telegram/miniapp/leads'
+    | '/api/telegram/miniapp/session'
     | '/admin/content/sections/'
     | '/admin/content/seo/'
     | '/admin/content/services/'
@@ -513,6 +575,7 @@ export interface FileRouteTypes {
     | '/faq'
     | '/industries'
     | '/mcp'
+    | '/miniapp'
     | '/packages'
     | '/privacy'
     | '/robots.txt'
@@ -534,6 +597,8 @@ export interface FileRouteTypes {
     | '/admin/content/contacts'
     | '/admin/content/faq'
     | '/admin/content/packages'
+    | '/api/telegram/health'
+    | '/api/telegram/webhook'
     | '/services/bots/max'
     | '/services/bots/miniapp'
     | '/services/bots/telegram'
@@ -547,6 +612,9 @@ export interface FileRouteTypes {
     | '/admin/content/sections/$slug'
     | '/admin/content/seo/$slug'
     | '/admin/content/services/$slug'
+    | '/api/telegram/miniapp/conversation-link'
+    | '/api/telegram/miniapp/leads'
+    | '/api/telegram/miniapp/session'
     | '/admin/content/sections'
     | '/admin/content/seo'
     | '/admin/content/services'
@@ -559,6 +627,7 @@ export interface FileRouteTypes {
     | '/faq'
     | '/industries'
     | '/mcp'
+    | '/miniapp'
     | '/packages'
     | '/privacy'
     | '/robots.txt'
@@ -584,6 +653,8 @@ export interface FileRouteTypes {
     | '/admin/content/contacts'
     | '/admin/content/faq'
     | '/admin/content/packages'
+    | '/api/telegram/health'
+    | '/api/telegram/webhook'
     | '/services/bots/max'
     | '/services/bots/miniapp'
     | '/services/bots/telegram'
@@ -597,6 +668,9 @@ export interface FileRouteTypes {
     | '/admin/content/sections/$slug'
     | '/admin/content/seo/$slug'
     | '/admin/content/services/$slug'
+    | '/api/telegram/miniapp/conversation-link'
+    | '/api/telegram/miniapp/leads'
+    | '/api/telegram/miniapp/session'
     | '/admin/content/sections/'
     | '/admin/content/seo/'
     | '/admin/content/services/'
@@ -610,6 +684,7 @@ export interface RootRouteChildren {
   FaqRoute: typeof FaqRoute
   IndustriesRoute: typeof IndustriesRoute
   McpRoute: typeof McpRoute
+  MiniappRoute: typeof MiniappRoute
   PackagesRoute: typeof PackagesRoute
   PrivacyRoute: typeof PrivacyRoute
   RobotsDottxtRoute: typeof RobotsDottxtRoute
@@ -622,6 +697,11 @@ export interface RootRouteChildren {
   ApiMediaRoute: typeof ApiMediaRoute
   MediaFileRoute: typeof MediaFileRoute
   Char91DotmcpChar93InvokeToolToolRoute: typeof Char91DotmcpChar93InvokeToolToolRoute
+  ApiTelegramHealthRoute: typeof ApiTelegramHealthRoute
+  ApiTelegramWebhookRoute: typeof ApiTelegramWebhookRoute
+  ApiTelegramMiniappConversationLinkRoute: typeof ApiTelegramMiniappConversationLinkRoute
+  ApiTelegramMiniappLeadsRoute: typeof ApiTelegramMiniappLeadsRoute
+  ApiTelegramMiniappSessionRoute: typeof ApiTelegramMiniappSessionRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -666,6 +746,13 @@ declare module '@tanstack/react-router' {
       path: '/packages'
       fullPath: '/packages'
       preLoaderRoute: typeof PackagesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/miniapp': {
+      id: '/miniapp'
+      path: '/miniapp'
+      fullPath: '/miniapp'
+      preLoaderRoute: typeof MiniappRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/mcp': {
@@ -878,6 +965,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ServicesBotsMaxRouteImport
       parentRoute: typeof ServicesBotsRoute
     }
+    '/api/telegram/webhook': {
+      id: '/api/telegram/webhook'
+      path: '/api/telegram/webhook'
+      fullPath: '/api/telegram/webhook'
+      preLoaderRoute: typeof ApiTelegramWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/telegram/health': {
+      id: '/api/telegram/health'
+      path: '/api/telegram/health'
+      fullPath: '/api/telegram/health'
+      preLoaderRoute: typeof ApiTelegramHealthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin/content/packages': {
       id: '/admin/content/packages'
       path: '/content/packages'
@@ -940,6 +1041,27 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin/content/sections/'
       preLoaderRoute: typeof AdminContentSectionsIndexRouteImport
       parentRoute: typeof AdminRoute
+    }
+    '/api/telegram/miniapp/session': {
+      id: '/api/telegram/miniapp/session'
+      path: '/api/telegram/miniapp/session'
+      fullPath: '/api/telegram/miniapp/session'
+      preLoaderRoute: typeof ApiTelegramMiniappSessionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/telegram/miniapp/leads': {
+      id: '/api/telegram/miniapp/leads'
+      path: '/api/telegram/miniapp/leads'
+      fullPath: '/api/telegram/miniapp/leads'
+      preLoaderRoute: typeof ApiTelegramMiniappLeadsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/telegram/miniapp/conversation-link': {
+      id: '/api/telegram/miniapp/conversation-link'
+      path: '/api/telegram/miniapp/conversation-link'
+      fullPath: '/api/telegram/miniapp/conversation-link'
+      preLoaderRoute: typeof ApiTelegramMiniappConversationLinkRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/admin/content/services/$slug': {
       id: '/admin/content/services/$slug'
@@ -1076,6 +1198,7 @@ const rootRouteChildren: RootRouteChildren = {
   FaqRoute: FaqRoute,
   IndustriesRoute: IndustriesRoute,
   McpRoute: McpRoute,
+  MiniappRoute: MiniappRoute,
   PackagesRoute: PackagesRoute,
   PrivacyRoute: PrivacyRoute,
   RobotsDottxtRoute: RobotsDottxtRoute,
@@ -1089,6 +1212,12 @@ const rootRouteChildren: RootRouteChildren = {
   ApiMediaRoute: ApiMediaRoute,
   MediaFileRoute: MediaFileRoute,
   Char91DotmcpChar93InvokeToolToolRoute: Char91DotmcpChar93InvokeToolToolRoute,
+  ApiTelegramHealthRoute: ApiTelegramHealthRoute,
+  ApiTelegramWebhookRoute: ApiTelegramWebhookRoute,
+  ApiTelegramMiniappConversationLinkRoute:
+    ApiTelegramMiniappConversationLinkRoute,
+  ApiTelegramMiniappLeadsRoute: ApiTelegramMiniappLeadsRoute,
+  ApiTelegramMiniappSessionRoute: ApiTelegramMiniappSessionRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

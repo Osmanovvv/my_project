@@ -135,7 +135,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
          и дедуплицирует только полностью одинаковые. Корневой canonical дал бы
          второй тег на каждой странице — каждая страница ставит свой сама. */
       { rel: "stylesheet", href: appCss },
-      { rel: "icon", href: "/favicon.png", type: "image/png" },
+      { rel: "icon", href: "/telegram-bot-avatar.png", type: "image/png" },
       /* preload маскота вручную не нужен: React 19 сам добавляет его
          для картинок с fetchPriority="high" (проп `priority` у <Mascot />). */
     ],
@@ -148,7 +148,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 
 function RootShell({ children }: { children: ReactNode }) {
   return (
-    <html lang="ru">
+    // Telegram Web App SDK добавляет служебные CSS-переменные к `<html>` до
+    // гидратации. Это ожидаемая мутация SDK, поэтому предупреждение React
+    // подавляется именно на границе документа.
+    <html lang="ru" suppressHydrationWarning>
       <head>
         <HeadContent />
       </head>
@@ -183,8 +186,9 @@ function RootComponent() {
    * ветки значило бы поддерживать две копии.
    */
   const isAdmin = pathname === "/admin" || pathname.startsWith("/admin/");
+  const isMiniApp = pathname === "/miniapp" || pathname.startsWith("/miniapp/");
 
-  if (isAdmin) {
+  if (isAdmin || isMiniApp) {
     return (
       <QueryClientProvider client={queryClient}>
         <Outlet />

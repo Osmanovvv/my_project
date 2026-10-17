@@ -12,7 +12,18 @@ export const LEAD_LIMITS = {
   task: { max: 1000 },
   page: { max: 300 },
   source: { max: 500 },
+  sourceDetail: { max: 500 },
 } as const;
+
+/** Каналы, по которым заявка попадает в единую таблицу lead. */
+export const LEAD_SOURCES = [
+  "website",
+  "telegram_bot",
+  "telegram_miniapp",
+  "telegram_deeplink",
+] as const;
+
+export type LeadSource = (typeof LEAD_SOURCES)[number];
 
 export type LeadField = "name" | "contact" | "task" | "consent";
 
@@ -23,8 +34,10 @@ export type Lead = {
   task: string;
   /** Страница, с которой отправлена заявка. */
   page: string;
-  /** UTM-метки и реферер, собранные при заходе. */
-  source: string;
+  /** Канонический канал заявки. */
+  source: LeadSource;
+  /** UTM-метки, реферер или другие безопасные детали канала. */
+  sourceDetail: string;
   /**
    * Согласие на обработку данных — отмечено ли поле на форме.
    *
@@ -57,6 +70,15 @@ function cleanText(value: unknown): string {
     .trim();
 }
 
+export function isLeadSource(value: unknown): value is LeadSource {
+  return typeof value === "string" && (LEAD_SOURCES as readonly string[]).includes(value);
+}
+
+/** Приводит недоверенный канал к одному из четырёх разрешённых значений. */
+export function resolveLeadSource(value: unknown, fallback: LeadSource = "website"): LeadSource {
+  return isLeadSource(value) ? value : fallback;
+}
+
 function isPhone(value: string): boolean {
   const digits = value.replace(/\D/g, "");
   return digits.length >= 10 && digits.length <= 15;
@@ -65,12 +87,18 @@ function isPhone(value: string): boolean {
 /** Приводит произвольный JSON к форме заявки. Не обрезает — длину проверяет `validateLead`. */
 export function normalizeLead(raw: unknown): Lead {
   const input = (raw ?? {}) as Record<string, unknown>;
+  const rawSource = cleanLine(input.source);
+  const source = resolveLeadSource(rawSource);
+  const sourceDetail = cleanLine(
+    input.source_detail ?? input.sourceDetail ?? (isLeadSource(rawSource) ? "" : rawSource),
+  ).slice(0, LEAD_LIMITS.sourceDetail.max);
   return {
     name: cleanLine(input.name),
     contact: cleanLine(input.contact),
     task: cleanText(input.task),
     page: cleanLine(input.page).slice(0, LEAD_LIMITS.page.max),
-    source: cleanLine(input.source).slice(0, LEAD_LIMITS.source.max),
+    source,
+    sourceDetail,
     /* Строго `true`, а не «что-нибудь истинное»: строка "false" или
        единица из чужого запроса не должны сходить за согласие. */
     consent: input.consent === true,

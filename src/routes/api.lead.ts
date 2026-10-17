@@ -1,8 +1,19 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { isSameOriginRequest, readJsonRequest } from "../server/http-security.server";
 
 import { normalizeLead, validateLead, type Lead } from "../lib/lead";
 import { formatLeadMessage, readTelegramConfig, sendTelegramMessage } from "../lib/telegram.server";
-import { insertLead, markDelivery, purgeExpiredLeads } from "../server/leads.server";
+import {
+  findLeadByIdempotencyKey,
+  insertLeadWithIdempotency,
+  markDelivery,
+  purgeExpiredLeads,
+} from "../server/leads.server";
+import { createTelegramLeadLink, currentTelegramEnvironment } from "../server/telegram-data.server";
+import {
+  isTelegramOperatorAvailable,
+  notifyTelegramOperatorOfLead,
+} from "../server/telegram-operator-flow.server";
 
 /**
  * POST /api/lead — приём заявки: сохранение в базу и доставка в Telegram.
@@ -30,6 +41,8 @@ import { insertLead, markDelivery, purgeExpiredLeads } from "../server/leads.ser
 
 const MAX_BODY_BYTES = 20_000;
 const RATE_LIMIT = { windowMs: 60_000, maxRequests: 3, maxKeys: 500 };
+const IDEMPOTENCY_KEY_RE = /^[A-Za-z0-9._:-]{8,255}$/;
+const TELEGRAM_BOT_USERNAME_RE = /^[A-Za-z0-9_]{5,32}$/;
 
 /**
  * Ограничение частоты — best effort. На serverless-рантайме память живёт
@@ -90,6 +103,66 @@ function json(body: unknown, status: number): Response {
   });
 }
 
+function readIdempotencyKey(request: Request): string {
+  const key = request.headers.get("idempotency-key")?.trim() ?? "";
+  if (key && !IDEMPOTENCY_KEY_RE.test(key)) throw new Error("invalid_idempotency_key");
+  return key;
+}
+
+function telegramBotUsername(): string | null {
+  const raw = (process.env.TELEGRAM_BOT_USERNAME?.trim() || "ITagent_bot").replace(/^@/, "");
+  return TELEGRAM_BOT_USERNAME_RE.test(raw) ? raw : null;
+}
+
+function leadTelegramEnvironment() {
+  return currentTelegramEnvironment() === "production"
+    ? ("production" as const)
+    : ("test" as const);
+}
+
+function leadTelegramUrl(leadId: number): string | null {
+  if (!leadId) return null;
+  const username = telegramBotUsername();
+  if (!username) return null;
+  try {
+    const token = createTelegramLeadLink({
+      environment: leadTelegramEnvironment(),
+      leadId,
+    });
+    return `https://t.me/${username}?start=lead_${token}`;
+  } catch (error) {
+    console.error(`[lead] не удалось создать Telegram-ссылку для заявки №${leadId}`, error);
+    return null;
+  }
+}
+
+function successResponse(leadId: number, duplicate = false): Response {
+  const telegramUrl = leadTelegramUrl(leadId);
+  return json(
+    {
+      ok: true,
+      ...(duplicate ? { duplicate: true } : {}),
+      ...(telegramUrl ? { telegram_url: telegramUrl } : {}),
+    },
+    200,
+  );
+}
+
+function operatorLeadText(lead: Lead): string {
+  return [
+    `Имя: ${lead.name}`,
+    `Контакт: ${lead.contact}`,
+    lead.task ? `Задача: ${lead.task}` : "Задача: не указана",
+    `Страница: ${lead.page || "—"}`,
+  ].join("\n");
+}
+
+function operatorNotificationsRequested(): boolean {
+  return ["1", "true", "yes", "on"].includes(
+    process.env.TELEGRAM_OPERATOR_NOTIFICATIONS?.trim().toLowerCase() ?? "",
+  );
+}
+
 /**
  * В лог — содержимое заявки ТОЛЬКО если она не записалась в базу: тогда
  * журнал — последняя копия, и потерять её значит потерять клиента.
@@ -112,21 +185,18 @@ function logLead(reason: string, lead: Lead, leadId: number, detail?: string): v
 }
 
 async function handleLead({ request }: { request: Request }): Promise<Response> {
-  if (!request.headers.get("content-type")?.includes("application/json")) {
-    return json({ ok: false, error: "unsupported_media_type" }, 415);
-  }
+  if (!isSameOriginRequest(request)) return json({ ok: false, error: "bad_origin" }, 403);
+  const body = await readJsonRequest(request, MAX_BODY_BYTES);
+  if (!body.ok) return json({ ok: false, error: body.error }, body.status);
 
-  const raw = await request.text();
-  if (raw.length > MAX_BODY_BYTES) {
-    return json({ ok: false, error: "payload_too_large" }, 413);
-  }
-
-  let parsed: unknown;
+  let idempotencyKey = "";
   try {
-    parsed = JSON.parse(raw);
+    idempotencyKey = readIdempotencyKey(request);
   } catch {
-    return json({ ok: false, error: "bad_request" }, 400);
+    return json({ ok: false, error: "invalid_idempotency_key" }, 400);
   }
+
+  const parsed = body.value;
 
   // Honeypot: поле спрятано от людей, заполняют его только боты.
   // Отвечаем успехом, чтобы спамер не подбирал обход.
@@ -141,6 +211,18 @@ async function handleLead({ request }: { request: Request }): Promise<Response> 
     return json({ ok: false, error: "validation_failed", fields }, 422);
   }
 
+  /* Повтор с тем же ключом — безопасное подтверждение уже принятой заявки.
+     Проверяем его до rate limit: сетевой retry не должен превращаться в
+     ошибку только потому, что браузер повторил запрос несколько раз. */
+  if (idempotencyKey) {
+    try {
+      const existingLeadId = findLeadByIdempotencyKey(idempotencyKey);
+      if (existingLeadId !== undefined) return successResponse(existingLeadId, true);
+    } catch {
+      return json({ ok: false, error: "invalid_idempotency_key" }, 400);
+    }
+  }
+
   if (isRateLimited(clientKey(request))) {
     return json({ ok: false, error: "rate_limited" }, 429);
   }
@@ -149,7 +231,9 @@ async function handleLead({ request }: { request: Request }): Promise<Response> 
      доставить заявку, и терять её из-за проблем с диском незачем. */
   let leadId = 0;
   try {
-    leadId = insertLead(lead);
+    const inserted = insertLeadWithIdempotency(lead, idempotencyKey);
+    if (inserted.duplicate) return successResponse(inserted.leadId, true);
+    leadId = inserted.leadId;
     /* Срок хранения из политики поддерживается здесь же: новая заявка —
        повод убрать те, что старше трёх лет. Сбой чистки не должен
        мешать приёму, поэтому она в своём try. */
@@ -163,23 +247,47 @@ async function handleLead({ request }: { request: Request }): Promise<Response> 
     logLead("не удалось записать в базу", lead, 0, String(error));
   }
 
-  /* Шаг 2. Уведомление. */
+  /* Шаг 2. Уведомление. Если личный чат оператора явно включён и проверен,
+     заявка уходит в общий outbox ровно один раз. До этого сохраняется старый
+     TELEGRAM_CHAT_ID, чтобы переход не ломал рабочую форму. */
+  if (leadId && operatorNotificationsRequested() && isTelegramOperatorAvailable()) {
+    try {
+      const queued = notifyTelegramOperatorOfLead({
+        environment: leadTelegramEnvironment(),
+        leadId,
+        text: operatorLeadText(lead),
+      });
+      if (queued) {
+        markDelivery(leadId, false, "telegram_outbox_pending");
+        return successResponse(leadId);
+      }
+      /* Очередь уже могла содержать это уведомление: второй канал в таком
+         случае не используется, иначе повторный вызов даст дубль. */
+      markDelivery(leadId, false, "telegram_outbox_pending");
+      return successResponse(leadId);
+    } catch (error) {
+      logLead("не удалось поставить уведомление оператора в outbox", lead, leadId, String(error));
+      markDelivery(leadId, false, "telegram_outbox_error");
+      return successResponse(leadId);
+    }
+  }
+
   const config = readTelegramConfig();
   if (!config) {
     logLead("Telegram не настроен: нет TELEGRAM_BOT_TOKEN или TELEGRAM_CHAT_ID", lead, leadId);
     if (leadId) markDelivery(leadId, false, "не настроен TELEGRAM_BOT_TOKEN/TELEGRAM_CHAT_ID");
-    return leadId ? json({ ok: true }, 200) : json({ ok: false, error: "delivery_failed" }, 502);
+    return leadId ? successResponse(leadId) : json({ ok: false, error: "delivery_failed" }, 502);
   }
 
   const result = await sendTelegramMessage(config, formatLeadMessage(lead));
   if (!result.ok) {
     logLead("не доставлено в Telegram", lead, leadId, result.detail);
     if (leadId) markDelivery(leadId, false, result.detail ?? "неизвестная ошибка");
-    return leadId ? json({ ok: true }, 200) : json({ ok: false, error: "delivery_failed" }, 502);
+    return leadId ? successResponse(leadId) : json({ ok: false, error: "delivery_failed" }, 502);
   }
 
   if (leadId) markDelivery(leadId, true);
-  return json({ ok: true }, 200);
+  return successResponse(leadId);
 }
 
 function methodNotAllowed(): Response {

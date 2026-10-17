@@ -391,12 +391,38 @@ function LeadDetail({ lead, onClose }: { lead: LeadRecord; onClose: () => void }
 
       <dl className="mt-4 grid gap-x-4 gap-y-2 text-xs sm:grid-cols-2">
         <Meta label="Страница" value={lead.page || "—"} />
-        <Meta label="Источник" value={formatSource(lead.source)} />
+        <Meta label="Источник" value={formatSource(lead.source, lead.source_detail)} />
         {/* Факт согласия — здесь, а не в отдельном отчёте: если человек
             спросит «на что я соглашался», ответ должен быть под рукой
             вместе с самой заявкой. */}
         <Meta label="Согласие на обработку" value={formatConsent(lead)} />
       </dl>
+
+      <div className="mt-4 rounded-lg border border-border bg-muted/30 p-3">
+        <div className="text-xs font-medium text-foreground">Telegram-связь</div>
+        {lead.telegram_conversation_id != null ? (
+          <dl className="mt-2 grid gap-x-4 gap-y-2 text-xs sm:grid-cols-2">
+            <Meta
+              label="Пользователь"
+              value={
+                lead.telegram_username
+                  ? `@${lead.telegram_username.replace(/^@/, "")}`
+                  : lead.telegram_display_name || "без username"
+              }
+            />
+            <Meta label="Telegram ID" value={lead.telegram_user_id || "—"} />
+            <Meta label="Диалог" value={`№${lead.telegram_conversation_id}`} />
+            <Meta label="Окружение" value={lead.telegram_environment || "—"} />
+            <Meta label="Статус диалога" value={lead.telegram_conversation_status || "—"} />
+            <Meta label="Chat ID" value={lead.telegram_chat_id || "—"} />
+          </dl>
+        ) : (
+          <p className="mt-1 text-xs text-muted-foreground">
+            Telegram ещё не привязан. Заявка остаётся только в админке и не получает случайный
+            диалог.
+          </p>
+        )}
+      </div>
 
       {lead.delivered === 0 && (
         <div className="mt-4 flex items-start gap-2.5 rounded-lg border border-destructive/40 bg-destructive/5 p-3 text-sm">
@@ -526,16 +552,23 @@ function toPhoneLink(contact: string): string | null {
   return `tel:+${digits}`;
 }
 
-/** UTM приходят строкой JSON — показываем по-человечески. */
-function formatSource(raw: string): string {
-  if (!raw) return "прямой заход";
+/** Канал показываем отдельно от UTM/referrer-деталей. */
+function formatSource(raw: string, detail = ""): string {
+  const labels: Record<string, string> = {
+    website: "Сайт",
+    telegram_bot: "Telegram-бот",
+    telegram_miniapp: "Telegram Mini App",
+    telegram_deeplink: "Telegram-ссылка",
+  };
+  const label = labels[raw] ?? "Сайт";
+  if (!detail) return label;
   try {
-    const parsed = JSON.parse(raw) as Record<string, string>;
+    const parsed = JSON.parse(detail) as Record<string, string>;
     const parts = Object.entries(parsed)
       .filter(([, value]) => value)
       .map(([key, value]) => `${key.replace(/^utm_/, "")}: ${value}`);
-    return parts.length ? parts.join(", ") : "прямой заход";
+    return parts.length ? `${label} · ${parts.join(", ")}` : label;
   } catch {
-    return raw;
+    return `${label} · ${detail}`;
   }
 }

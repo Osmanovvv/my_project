@@ -22,7 +22,12 @@ type Props = {
 
 type Status = "idle" | "sending" | "sent" | "error";
 
-type LeadResponse = { ok?: boolean; error?: string; fields?: LeadErrors };
+type LeadResponse = {
+  ok?: boolean;
+  error?: string;
+  fields?: LeadErrors;
+  telegram_url?: string;
+};
 
 /**
  * Сообщения о сбое никуда не отправляют пользователя: публичных каналов
@@ -49,6 +54,11 @@ export function ContactSection({ compact = false, id }: Props) {
   const [consent, setConsent] = useState(false);
   const [errors, setErrors] = useState<LeadErrors>({});
   const [failure, setFailure] = useState<string | null>(null);
+  const [telegramUrl, setTelegramUrl] = useState<string | null>(null);
+  /* Один ключ живёт до успешной отправки или изменения формы. Поэтому
+     повтор после таймаута сети возвращает ту же заявку, а новая редакция
+     полей получает новый ключ. */
+  const [submissionKey, setSubmissionKey] = useState<string | null>(null);
   const fieldPrefix = useId();
 
   const fieldId = (name: string) => `${fieldPrefix}-${name}`;
@@ -71,7 +81,8 @@ export function ContactSection({ compact = false, id }: Props) {
       contact: data.get("contact"),
       task: data.get("task"),
       page: window.location.pathname + window.location.search,
-      source: readAttribution(),
+      source: "website",
+      source_detail: readAttribution(),
       consent,
     });
 
@@ -87,11 +98,13 @@ export function ContactSection({ compact = false, id }: Props) {
     setErrors({});
     setFailure(null);
     setStatus("sending");
+    const requestKey = submissionKey ?? crypto.randomUUID();
+    if (submissionKey === null) setSubmissionKey(requestKey);
 
     try {
       const response = await fetch("/api/lead", {
         method: "POST",
-        headers: { "content-type": "application/json" },
+        headers: { "content-type": "application/json", "Idempotency-Key": requestKey },
         body: JSON.stringify({ ...lead, company: String(data.get("company") ?? "") }),
       });
 
@@ -114,6 +127,8 @@ export function ContactSection({ compact = false, id }: Props) {
 
       form.reset();
       setConsent(false);
+      setSubmissionKey(null);
+      setTelegramUrl(payload?.telegram_url ?? null);
       setStatus("sent");
       toast.success("Заявка отправлена", {
         description: "Свяжемся в течение рабочего дня в Telegram или по телефону.",
@@ -131,6 +146,8 @@ export function ContactSection({ compact = false, id }: Props) {
     setErrors((prev) => (prev[field] ? { ...prev, [field]: undefined } : prev));
     setStatus((prev) => (prev === "error" || prev === "sent" ? "idle" : prev));
     setFailure(null);
+    setSubmissionKey(null);
+    setTelegramUrl(null);
   }
 
   const sending = status === "sending";
@@ -299,7 +316,19 @@ export function ContactSection({ compact = false, id }: Props) {
               className="flex items-start gap-2.5 rounded-lg border border-accent/30 bg-accent-soft p-3.5 text-sm text-foreground"
             >
               <CheckMark />
-              <span>{texts["contact.success"]}</span>
+              <div className="space-y-2">
+                <span>{texts["contact.success"]}</span>
+                {telegramUrl && (
+                  <a
+                    href={telegramUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block font-medium underline underline-offset-2 hover:text-accent"
+                  >
+                    Продолжить в Telegram и привязать заявку
+                  </a>
+                )}
+              </div>
             </div>
           )}
 

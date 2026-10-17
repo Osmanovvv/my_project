@@ -21,11 +21,9 @@
  * правильным способом, но для первого развёртывания файл проще и прощает
  * больше.
  *
- * ⚠️ У ЭТОГО ЕСТЬ ОБОРОТНАЯ СТОРОНА, и на неё уже наступили. Проверочный
- * сервер, запущенный из каталога проекта, тоже подхватит `.env` — и каждая
- * тестовая заявка уедет НАСТОЯЩИМ сообщением в рабочий Telegram владельца.
- * Отключается пустым значением в окружении: пустая строка «определена»,
- * поэтому файл её не перебивает.
+ * Локальный запуск обязан быть безопасным даже при случайно сохранённом
+ * настоящем токене: отправка разрешается только с APP_ENV=production или
+ * явным TELEGRAM_DELIVERY_ENABLED=true для тестового бота.
  *
  *   TELEGRAM_BOT_TOKEN= TELEGRAM_CHAT_ID= node .output/server/index.mjs
  */
@@ -33,7 +31,11 @@
 import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
+import { isTelegramDeliveryEnabled } from "../lib/telegram.server";
 import { purgeExpiredLeads } from "./leads.server";
+import { purgeExpiredTelegramData } from "./telegram-data.server";
+import { purgeExpiredTelegramMiniAppSessions } from "./telegram-miniapp.server";
+import { scheduleTelegramOutboxWorker } from "./telegram-outbox.server";
 
 /** Ключи, из-за которых сайт работает не полностью. */
 const REQUIRED_FOR_LEADS = ["TELEGRAM_BOT_TOKEN", "TELEGRAM_CHAT_ID"] as const;
@@ -93,10 +95,20 @@ export function scheduleLeadRetention(): void {
     } catch (error) {
       console.error("[lead] чистка старых заявок не удалась", error);
     }
+    try {
+      const purged = purgeExpiredTelegramData();
+      const miniAppSessions = purgeExpiredTelegramMiniAppSessions();
+      const total = Object.values(purged).reduce((sum, count) => sum + count, miniAppSessions);
+      if (total > 0)
+        console.log(`[telegram] удалено технических записей по сроку хранения: ${total}`);
+    } catch (error) {
+      console.error("[telegram] чистка технических записей не удалась", error);
+    }
   };
 
   sweep();
   setInterval(sweep, DAY_MS).unref();
+  scheduleTelegramOutboxWorker();
 }
 
 /** Одна строка на настройку: что включено, что нет и чем это грозит. */
@@ -108,10 +120,21 @@ export function reportStartupConfig(): void {
 
   if (fromFile) say(`подхвачен .env: ${fromFile} переменных`);
 
+  const configuredAppEnv = process.env.APP_ENV?.trim().toLowerCase();
+  const appEnv =
+    configuredAppEnv ||
+    (process.env.NODE_ENV?.trim().toLowerCase() === "production" ||
+    process.env.DATA_DIR?.trim() === "/var/lib/itagent"
+      ? "production"
+      : "development");
+  say(`окружение: ${appEnv}`);
   say(`каталог данных: ${process.env.DATA_DIR?.trim() || ".data (рядом с процессом)"}`);
 
   const missing = REQUIRED_FOR_LEADS.filter((key) => !process.env[key]?.trim());
-  if (missing.length === 0) {
+  if (!isTelegramDeliveryEnabled()) {
+    say("уведомления о заявках: ВЫКЛЮЧЕНЫ — защитная блокировка окружения");
+    say("           для тестового бота задайте TELEGRAM_DELIVERY_ENABLED=true");
+  } else if (missing.length === 0) {
     say("уведомления о заявках: включены");
   } else {
     say(`уведомления о заявках: ВЫКЛЮЧЕНЫ — нет ${missing.join(" и ")}`);

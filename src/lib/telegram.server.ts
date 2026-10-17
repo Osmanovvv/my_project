@@ -8,6 +8,7 @@
  */
 
 import type { Lead } from "./lead";
+import type { TelegramBotReply } from "./telegram-bot-message";
 
 const TELEGRAM_API = "https://api.telegram.org";
 const REQUEST_TIMEOUT_MS = 8_000;
@@ -18,13 +19,60 @@ export type TelegramConfig = { token: string; chatId: string };
 
 export type DeliveryResult = { ok: true } | { ok: false; detail: string };
 
+/** Один запрос Bot API. Ретраи намеренно находятся выше, в outbox worker. */
+export type TelegramApiAttemptResult =
+  | { kind: "sent"; messageId?: number }
+  | { kind: "failed"; code: string; httpStatus?: number }
+  | { kind: "retryable"; code: string; httpStatus?: number; retryAfterMs?: number }
+  | { kind: "unknown"; code: string };
+
+export type TelegramBotMessageInput = TelegramBotReply & {
+  chatId: string;
+  parseMode?: "HTML";
+};
+
+/**
+ * Отправка в Telegram включается автоматически только для production.
+ *
+ * Для development/staging нужен явный TELEGRAM_DELIVERY_ENABLED=true. Это
+ * защищает рабочий чат, если локальный .env случайно содержит настоящий токен.
+ */
+export function isTelegramDeliveryEnabled(
+  env: Record<string, string | undefined> | undefined = typeof process !== "undefined"
+    ? process.env
+    : undefined,
+): boolean {
+  const configuredAppEnv = env?.APP_ENV?.trim().toLowerCase();
+  const appEnv =
+    configuredAppEnv ||
+    (env?.NODE_ENV?.trim().toLowerCase() === "production" ||
+    env?.DATA_DIR?.trim() === "/var/lib/itagent"
+      ? "production"
+      : "development");
+  const override = env?.TELEGRAM_DELIVERY_ENABLED?.trim().toLowerCase();
+
+  if (["0", "false", "no", "off"].includes(override ?? "")) return false;
+  if (appEnv === "production") return true;
+  return ["1", "true", "yes", "on"].includes(override ?? "");
+}
+
 /** Возвращает конфиг или null, если переменные не заданы. */
 export function readTelegramConfig(): TelegramConfig | null {
   const env = typeof process !== "undefined" ? process.env : undefined;
-  const token = env?.TELEGRAM_BOT_TOKEN?.trim();
+  if (!isTelegramDeliveryEnabled(env)) return null;
+
+  const token = readTelegramBotToken();
   const chatId = env?.TELEGRAM_CHAT_ID?.trim();
   if (!token || !chatId) return null;
   return { token, chatId };
+}
+
+/** Токен нужен исходящему outbox и не требует глобального TELEGRAM_CHAT_ID. */
+export function readTelegramBotToken(): string | null {
+  const env = typeof process !== "undefined" ? process.env : undefined;
+  if (!isTelegramDeliveryEnabled(env)) return null;
+  const token = env?.TELEGRAM_BOT_TOKEN?.trim();
+  return token || null;
 }
 
 /** Экранирование под `parse_mode: HTML` — иначе `<` в тексте ломает сообщение. */
@@ -58,8 +106,9 @@ export function formatLeadMessage(lead: Lead, now: Date = new Date()): string {
   }
 
   lines.push("", `<b>Страница:</b> ${escapeHtml(lead.page || "—")}`);
-  if (lead.source) {
-    lines.push(`<b>Источник:</b> ${escapeHtml(lead.source)}`);
+  lines.push(`<b>Источник:</b> ${escapeHtml(lead.source)}`);
+  if (lead.sourceDetail) {
+    lines.push(`<b>Детали источника:</b> ${escapeHtml(lead.sourceDetail)}`);
   }
   lines.push(`<b>Время:</b> ${moscowTime(now)} (МСК)`);
 
@@ -68,48 +117,97 @@ export function formatLeadMessage(lead: Lead, now: Date = new Date()): string {
 
 const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
+function retryAfterMs(payload: unknown): number | undefined {
+  if (!payload || typeof payload !== "object") return undefined;
+  const parameters = (payload as { parameters?: unknown }).parameters;
+  if (!parameters || typeof parameters !== "object") return undefined;
+  const retryAfter = (parameters as { retry_after?: unknown }).retry_after;
+  if (typeof retryAfter !== "number" || !Number.isFinite(retryAfter)) return undefined;
+  return Math.min(Math.max(Math.trunc(retryAfter * 1_000), 0), 120_000);
+}
+
 /**
- * Отправляет сообщение с одной повторной попыткой: сетевые сбои и 5xx
- * у Telegram случаются, терять из-за них заявку нельзя.
+ * Делает ровно одну попытку отправки. Ответ намеренно не содержит описание
+ * Telegram: оно может включать адресата или другие персональные данные.
+ */
+export async function sendTelegramBotMessage(
+  config: { token: string },
+  input: TelegramBotMessageInput,
+): Promise<TelegramApiAttemptResult> {
+  try {
+    const response = await fetch(`${TELEGRAM_API}/bot${config.token}/sendMessage`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        chat_id: input.chatId,
+        text: input.text,
+        ...(input.parseMode ? { parse_mode: input.parseMode } : {}),
+        ...(input.replyMarkup ? { reply_markup: input.replyMarkup } : {}),
+        disable_web_page_preview: true,
+      }),
+      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+    });
+
+    const payload = (await response.json().catch(() => null)) as {
+      ok?: boolean;
+      error_code?: unknown;
+      result?: { message_id?: unknown };
+    } | null;
+    const status = response.status;
+
+    if (response.ok && payload?.ok === true) {
+      const messageId = payload.result?.message_id;
+      if (typeof messageId === "number" && Number.isSafeInteger(messageId) && messageId > 0)
+        return { kind: "sent", messageId };
+      return { kind: "unknown", code: "invalid_response" };
+    }
+
+    if (status === 429 || status >= 500) {
+      // HTML/неполный ответ прокси не доказывает, что Telegram отверг запрос.
+      if (payload?.ok !== false || payload.error_code !== status)
+        return { kind: "unknown", code: `http_${status}_unconfirmed` };
+      return {
+        kind: "retryable",
+        code: status === 429 ? "http_429" : `http_${status}`,
+        httpStatus: status,
+        retryAfterMs: retryAfterMs(payload),
+      };
+    }
+    if (status >= 400 && status < 500) {
+      return { kind: "failed", code: `http_${status}`, httpStatus: status };
+    }
+    return { kind: "unknown", code: `http_${status || "invalid_response"}` };
+  } catch (error) {
+    if (error instanceof Error && ["AbortError", "TimeoutError"].includes(error.name)) {
+      return { kind: "unknown", code: "timeout" };
+    }
+    return { kind: "unknown", code: "network_error" };
+  }
+}
+
+/**
+ * Повторяет только подтверждённый временный отказ Telegram.
+ * Сетевой сбой/таймаут не повторяется: сообщение уже могло быть принято.
  */
 export async function sendTelegramMessage(
   config: TelegramConfig,
   text: string,
 ): Promise<DeliveryResult> {
-  let lastDetail = "неизвестная ошибка";
+  let lastDetail = "unknown";
 
   for (let attempt = 1; attempt <= ATTEMPTS; attempt++) {
-    try {
-      const response = await fetch(`${TELEGRAM_API}/bot${config.token}/sendMessage`, {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({
-          chat_id: config.chatId,
-          text,
-          parse_mode: "HTML",
-          disable_web_page_preview: true,
-        }),
-        signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
-      });
+    const result = await sendTelegramBotMessage(config, {
+      chatId: config.chatId,
+      text,
+      parseMode: "HTML",
+    });
+    if (result.kind === "sent") return { ok: true };
+    lastDetail = result.code;
+    if (result.kind !== "retryable") return { ok: false, detail: lastDetail };
 
-      const payload = (await response.json().catch(() => null)) as {
-        ok?: boolean;
-        description?: string;
-      } | null;
-
-      if (response.ok && payload?.ok) return { ok: true };
-
-      lastDetail = `HTTP ${response.status}: ${payload?.description ?? "нет описания"}`;
-
-      // 4xx (кроме 429) — ошибка конфигурации, повтор не поможет.
-      if (response.status >= 400 && response.status < 500 && response.status !== 429) {
-        return { ok: false, detail: lastDetail };
-      }
-    } catch (error) {
-      lastDetail = error instanceof Error ? error.message : String(error);
+    if (attempt < ATTEMPTS) {
+      await wait(result.retryAfterMs ?? RETRY_DELAY_MS);
     }
-
-    if (attempt < ATTEMPTS) await wait(RETRY_DELAY_MS);
   }
 
   return { ok: false, detail: lastDetail };
