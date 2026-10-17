@@ -1,5 +1,7 @@
 import { Link, useLoaderData } from "@tanstack/react-router";
 import { Mascot } from "./Mascot";
+import { TelegramCta } from "./TelegramCta";
+import { TELEGRAM_LINK_SOURCES } from "../../lib/telegram-links";
 
 export function SiteFooter() {
   const { texts } = useLoaderData({ from: "__root__" });
@@ -35,7 +37,7 @@ export function SiteFooter() {
               по ней тяжело попасть пальцем. Паддинг расширяет область нажатия
               до 36px, отрицательный margin гасит его для раскладки — футер
               не становится выше. */}
-          <nav className="flex flex-wrap gap-x-6 gap-y-3 text-sm text-muted-foreground">
+          <nav className="flex flex-wrap items-center gap-x-6 gap-y-3 text-sm text-muted-foreground">
             <Link to="/services" className="-my-2 py-2 hover:text-foreground transition">
               Услуги
             </Link>
@@ -51,6 +53,14 @@ export function SiteFooter() {
             <Link to="/contacts" className="-my-2 py-2 hover:text-foreground transition">
               Контакты
             </Link>
+            <TelegramCta
+              source={TELEGRAM_LINK_SOURCES.footer}
+              ariaLabel="Открыть Telegram IT-Agent"
+              className="-my-2 py-2 text-muted-foreground hover:text-accent transition"
+              icon={false}
+            >
+              Открыть Telegram
+            </TelegramCta>
             {/* Политика — с каждой страницы, не только с формы: постоянная
                 ссылка на документ — требование ч. 2 ст. 18.1 152-ФЗ. */}
             <Link to="/privacy" className="-my-2 py-2 hover:text-foreground transition">

@@ -26,6 +26,8 @@ import { Mascot } from "../components/site/Mascot";
 import { SectionEyebrow } from "../components/site/SectionEyebrow";
 import { CtaLink } from "../components/site/CtaLink";
 import { ServiceCard } from "../components/site/ServiceCard";
+import { TelegramCta } from "../components/site/TelegramCta";
+import { TELEGRAM_LINK_SOURCES } from "../lib/telegram-links";
 
 export const Route = createFileRoute("/")({
   /* Мета-теги грузятся вместе с кейсами: head() видит только свой
@@ -163,6 +165,13 @@ function Hero() {
               <CtaLink to="/services" variant="secondary">
                 {texts["home.hero.secondaryCta"]}
               </CtaLink>
+              <TelegramCta
+                source={TELEGRAM_LINK_SOURCES.hero}
+                ariaLabel="Открыть Telegram IT-Agent"
+                className="h-12 rounded-xl border border-border bg-background px-6 text-sm font-medium text-muted-foreground transition hover:border-accent hover:text-accent"
+              >
+                Открыть Telegram
+              </TelegramCta>
             </div>
 
             {/*

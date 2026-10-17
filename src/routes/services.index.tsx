@@ -9,6 +9,8 @@ import { fetchPageMeta } from "../lib/content.rpc";
 import { pageSeo } from "../lib/seo";
 import { SectionEyebrow } from "../components/site/SectionEyebrow";
 import { CtaLink } from "../components/site/CtaLink";
+import { TelegramCta } from "../components/site/TelegramCta";
+import { TELEGRAM_LINK_SOURCES } from "../lib/telegram-links";
 
 export const Route = createFileRoute("/services/")({
   loader: () => fetchPageMeta({ data: { path: "/services" } }),
@@ -80,6 +82,13 @@ function ServicesHub() {
               {c.title}
             </Link>
           ))}
+          <TelegramCta
+            source={TELEGRAM_LINK_SOURCES.catalog}
+            ariaLabel="Открыть каталог услуг IT-Agent в Telegram"
+            className="rounded-full border border-accent/40 bg-accent-soft px-3.5 py-2 text-sm font-medium text-accent transition hover:border-accent hover:bg-accent hover:text-background"
+          >
+            Каталог в Telegram
+          </TelegramCta>
         </div>
       </PageHero>
 

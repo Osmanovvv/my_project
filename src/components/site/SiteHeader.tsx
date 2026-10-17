@@ -2,6 +2,8 @@ import { Link, useLoaderData } from "@tanstack/react-router";
 import { useState } from "react";
 import { Menu, X } from "lucide-react";
 import { Mascot } from "./Mascot";
+import { TelegramCta } from "./TelegramCta";
+import { TELEGRAM_LINK_SOURCES } from "../../lib/telegram-links";
 
 const nav = [
   { to: "/services", label: "Услуги" },
@@ -62,7 +64,14 @@ export function SiteHeader() {
           ))}
         </nav>
 
-        <div className="hidden md:block">
+        <div className="hidden md:flex items-center gap-2">
+          <TelegramCta
+            source={TELEGRAM_LINK_SOURCES.header}
+            ariaLabel="Открыть Telegram IT-Agent в новой вкладке"
+            className="h-9 rounded-lg border border-border px-3 text-sm text-muted-foreground transition hover:border-accent hover:text-accent"
+          >
+            В Telegram
+          </TelegramCta>
           <Link
             to="/contacts"
             data-mascot-cheer
@@ -104,6 +113,13 @@ export function SiteHeader() {
             >
               {texts["cta.primary"]}
             </Link>
+            <TelegramCta
+              source={TELEGRAM_LINK_SOURCES.header}
+              ariaLabel="Открыть Telegram IT-Agent"
+              className="mt-1 h-11 rounded-lg border border-border px-4 text-sm text-muted-foreground transition hover:border-accent hover:text-accent"
+            >
+              Открыть Telegram
+            </TelegramCta>
           </div>
         </div>
       )}
