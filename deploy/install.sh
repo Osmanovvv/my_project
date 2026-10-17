@@ -39,7 +39,7 @@ warn() { printf '\033[1;33m    %s\033[0m\n' "$*"; }
 say "Пакеты: nginx, certbot, sqlite3"
 export DEBIAN_FRONTEND=noninteractive
 apt-get update -q
-apt-get install -y -q nginx certbot python3-certbot-nginx sqlite3 curl ca-certificates gnupg ufw
+apt-get install -y -q nginx certbot python3-certbot-nginx sqlite3 curl ca-certificates openssl gnupg ufw
 
 # ── Node 24 ───────────────────────────────────────────────────────────────
 # Именно 24: приложение хранит заявки через встроенный node:sqlite,
@@ -99,6 +99,18 @@ else
     need_tty TELEGRAM_CHAT_ID
     read -r -p "ID чата для уведомлений (Enter — пока без Telegram): " TELEGRAM_CHAT_ID
   fi
+  # Операторские значения необязательны на первом деплое: меню включится
+  # только после явной настройки allowlist и личного chat ID.
+  TELEGRAM_OPERATOR_IDS="${TELEGRAM_OPERATOR_IDS:-}"
+  TELEGRAM_OPERATOR_CHAT_ID="${TELEGRAM_OPERATOR_CHAT_ID:-}"
+  TELEGRAM_TEST_USER_IDS="${TELEGRAM_TEST_USER_IDS:-}"
+  # Отдельный webhook secret не совпадает с токеном бота. Если его не передали
+  # явно, создаём криптографически случайный секрет прямо на сервере.
+  TELEGRAM_WEBHOOK_SECRET="${TELEGRAM_WEBHOOK_SECRET:-$(openssl rand -hex 32)}"
+  printf '%s' "$TELEGRAM_WEBHOOK_SECRET" | grep -Eq '^[A-Za-z0-9_-]{16,256}$' || {
+    echo "TELEGRAM_WEBHOOK_SECRET должен быть 16–256 безопасных символов" >&2
+    exit 1
+  }
   umask 027
   cat > "$ENV_FILE" <<EOF
 # Секреты сайта. Читает systemd (EnvironmentFile) при старте itagent.service.
@@ -107,10 +119,16 @@ else
 # Иначе порт 3000 доступен напрямую, мимо HTTPS и мимо проверки адресов.
 HOST=127.0.0.1
 PORT=3000
+APP_ENV=production
 DATA_DIR=$DATA_DIR
 ADMIN_PASSWORD=$ADMIN_PASSWORD
+TELEGRAM_DELIVERY_ENABLED=true
 TELEGRAM_BOT_TOKEN=$TELEGRAM_BOT_TOKEN
 TELEGRAM_CHAT_ID=$TELEGRAM_CHAT_ID
+TELEGRAM_OPERATOR_IDS=$TELEGRAM_OPERATOR_IDS
+TELEGRAM_OPERATOR_CHAT_ID=$TELEGRAM_OPERATOR_CHAT_ID
+TELEGRAM_TEST_USER_IDS=$TELEGRAM_TEST_USER_IDS
+TELEGRAM_WEBHOOK_SECRET=$TELEGRAM_WEBHOOK_SECRET
 EOF
   umask 022
   chown root:itagent "$ENV_FILE"; chmod 640 "$ENV_FILE"

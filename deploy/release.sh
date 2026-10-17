@@ -19,6 +19,11 @@ SITE_URL="${SITE_URL:-https://itagent.ru}"
 APP_DIR=/srv/itagent
 DATA_DIR=/var/lib/itagent
 
+case "$SITE_URL" in
+  https://*) ;;
+  *) echo "SITE_URL для production release должен начинаться с https://" >&2; exit 1 ;;
+esac
+
 cd "$(dirname "${BASH_SOURCE[0]}")/.."
 
 echo "==> Сборка под $SITE_URL"

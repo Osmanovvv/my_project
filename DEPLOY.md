@@ -17,7 +17,8 @@ ssh -t root@itagent.ru bash /srv/itagent/deploy/install.sh
 пароль админки.
 
 `install.sh` ставит nginx, Node 24, заводит пользователя и каталоги,
-спрашивает пароль админки и токен бота (кладёт их в `/etc/itagent/env`),
+спрашивает пароль админки и токен бота, а webhook secret генерирует сам
+(кладёт их в `/etc/itagent/env`),
 ставит юниты, срок журналов 30 дней, файрвол и сертификат Let's Encrypt.
 Повторный запуск ничего не ломает. Проверен на чистом Ubuntu 24.04.
 
@@ -45,6 +46,73 @@ NITRO_PRESET=node-server bun run build
 
 По умолчанию (без `NITRO_PRESET`) собирается Cloudflare Worker — он не
 запустится на обычном хостинге.
+
+## Локальный запуск в Docker
+
+Проект можно сначала проверить в том же формате, который потом удобно
+перенести на сервер. Нужны Docker Engine и Compose v2:
+
+```powershell
+docker compose build
+docker compose up -d
+docker compose ps
+curl http://localhost:3000/api/telegram/health
+```
+
+`compose.yaml` собирает Node/Nitro-образ, а том `itagent-data` хранит SQLite
+и загруженные изображения между перезапусками. Локальный режим запускается с
+`APP_ENV=development` и `TELEGRAM_DELIVERY_ENABLED=false`; реальный токен в
+`.env.docker` для этой проверки не нужен. Дополнительные локальные значения
+можно задать, скопировав `.env.docker.example` в `.env.docker` — этот файл не
+попадает в Git.
+
+Полезные команды:
+
+```powershell
+docker compose logs -f app
+docker compose down                 # контейнер остановится, данные останутся
+docker compose down -v              # удалить и контейнерный том с локальными данными
+```
+
+Перед публикацией задаётся `VITE_SITE_URL` при сборке образа, например:
+
+```powershell
+$env:VITE_SITE_URL='https://itagent.ru'
+docker compose build --no-cache
+```
+
+На сервере можно запустить этот же образ в Compose с томом, смонтированным в
+`/var/lib/itagent`, либо оставить подготовленный systemd-вариант ниже. Nginx и
+HTTPS в обоих случаях остаются перед приложением.
+
+Для Compose-варианта на сервере используйте отдельный production override:
+
+```bash
+cp .env.docker.example .env.docker
+# заполнить .env.docker боевыми значениями и хранить файл только на сервере
+VITE_SITE_URL=https://itagent.ru docker compose -f compose.yaml -f compose.production.yaml build
+docker compose -f compose.yaml -f compose.production.yaml up -d
+```
+
+Локальный `compose.yaml` намеренно оставляет `APP_ENV=development` и доставку
+выключенной; production-файл меняет только эти два режима. Токен не вшивается
+в образ и не должен передаваться в аргументах сборки.
+
+### Staging
+
+Staging изолирован окружением `staging` и отдельным Docker-томом. Скопируйте
+шаблон, оставьте доставку Telegram выключенной и поднимите тот же образ:
+
+```bash
+cp .env.staging.example .env.docker
+VITE_SITE_URL=https://staging.itagent.ru docker compose \
+  -f compose.yaml -f compose.staging.yaml build
+docker compose -f compose.yaml -f compose.staging.yaml up -d
+docker compose -f compose.yaml -f compose.staging.yaml ps
+```
+
+Staging не должен регистрировать общий production webhook. Для Telegram smoke-
+теста используйте отдельного staging-бота и только его тестовые private user ID.
 
 **Если сборка падает с `UNLOADABLE_DEPENDENCY` и «не удаётся найти путь»** —
 это устаревший кеш, а не ошибка в коде:
@@ -95,17 +163,117 @@ location / {
 
 ## Переменные окружения
 
-| Переменная           | Зачем                                        | Без неё                                                                          |
-| -------------------- | -------------------------------------------- | -------------------------------------------------------------------------------- |
-| `HOST`               | на каком адресе слушать                      | `0.0.0.0`; на сервере — `127.0.0.1`, чтобы порт 3000 не торчал наружу мимо nginx |
-| `DATA_DIR`           | где лежат база и картинки                    | берётся `.data` рядом с процессом                                                |
-| `ADMIN_PASSWORD`     | первый пароль в админку                      | войти нельзя                                                                     |
-| `TELEGRAM_BOT_TOKEN` | уведомления о заявках                        | заявка сохранится, уведомления не будет                                          |
-| `TELEGRAM_CHAT_ID`   | куда слать уведомления                       | то же                                                                            |
-| `VITE_SITE_URL`      | адрес сайта для canonical, og:image, sitemap | берётся `https://itagent.ru`                                                     |
+| Переменная                        | Зачем                                        | Без неё                                                                          |
+| --------------------------------- | -------------------------------------------- | -------------------------------------------------------------------------------- |
+| `HOST`                            | на каком адресе слушать                      | `0.0.0.0`; на сервере — `127.0.0.1`, чтобы порт 3000 не торчал наружу мимо nginx |
+| `APP_ENV`                         | окружение и защита Telegram                  | development; production задаётся install.sh                                      |
+| `DATA_DIR`                        | где лежат база и картинки                    | берётся `.data` рядом с процессом                                                |
+| `ADMIN_PASSWORD`                  | первый пароль в админку                      | войти нельзя                                                                     |
+| `TELEGRAM_DELIVERY_ENABLED`       | разрешить отправку в Telegram                | в development отправка заблокирована                                             |
+| `TELEGRAM_BOT_TOKEN`              | уведомления о заявках                        | заявка сохранится, уведомления не будет                                          |
+| `TELEGRAM_CHAT_ID`                | куда слать уведомления                       | то же                                                                            |
+| `TELEGRAM_BOT_USERNAME`           | публичный username бота для deep-link        | ссылка «Продолжить в Telegram» не показывается                                   |
+| `TELEGRAM_OPERATOR_NOTIFICATIONS` | направлять заявки в личное меню оператора    | сохраняется старый маршрут через `TELEGRAM_CHAT_ID`                              |
+| `TELEGRAM_OPERATOR_IDS`           | разрешённые Telegram user ID операторов      | операторское меню недоступно                                                     |
+| `TELEGRAM_OPERATOR_CHAT_ID`       | подтверждённый личный чат оператора          | контрольные уведомления оператора некуда отправлять                              |
+| `TELEGRAM_TEST_USER_IDS`          | разрешённые тестовые Telegram user ID        | тестовые входящие не изолируются явно                                            |
+| `TELEGRAM_WEBHOOK_SECRET`         | секрет входящего webhook                     | webhook не принимается                                                           |
+| `VITE_SITE_URL`                   | адрес сайта для canonical, og:image, sitemap | берётся `https://itagent.ru`                                                     |
+| `TELEGRAM_MINIAPP_URL`            | публичный HTTPS-адрес Mini App               | используется `VITE_SITE_URL/miniapp`                                             |
 
 `VITE_SITE_URL` вшивается в бандл **на этапе сборки** — задавать её нужно
 до `bun run build`, а не при запуске сервера.
+
+После запуска доступен безопасный health-check транспорта:
+`GET /api/telegram/health`. Он возвращает только окружение, timestamps
+последнего webhook и статусы outbox, без токена, chat ID и текста сообщений.
+Ответ `200` означает `ok` или `idle`, а `503` — `degraded` либо
+`not_configured`; route подходит для внешнего мониторинга и не заменяет
+проверку настоящим тестовым сообщением.
+
+Перед единственной регистрацией webhook запустите preflight после релиза:
+
+```bash
+node deploy/check-telegram-webhook.mjs https://itagent.ru
+```
+
+Он проверяет HTTPS, наличие `/api/telegram/health`, ответ `405` на GET
+webhook и отказ POST без secret. Скрипт не вызывает Telegram `setWebhook`;
+регистрация выполняется отдельно на шаге 10.7 после подтверждения релиза.
+
+После preflight webhook регистрируется отдельным скриптом с production env:
+
+```bash
+node deploy/set-telegram-webhook.mjs       # только dry-run
+node deploy/set-telegram-webhook.mjs --apply
+```
+
+Скрипт требует `APP_ENV=production`, HTTPS и сильный secret. Он передаёт только
+`message` и `callback_query` и не удаляет накопленные pending updates.
+
+После release и регистрации webhook выполните HTTP smoke-check:
+
+```bash
+node deploy/production-smoke.mjs https://itagent.ru
+```
+
+Для проверки, что webhook уже дошёл хотя бы один раз:
+
+```bash
+node deploy/production-smoke.mjs https://itagent.ru --require-webhook-activity
+```
+
+Полный ручной сценарий `/start → заявка → ответ оператора` и команды просмотра
+логов описаны в `docs/PRODUCTION_SMOKE_TEST.md`.
+
+Перед передачей production env на сервер выполните проверку без вывода
+секретов:
+
+```bash
+node deploy/validate-production-env.mjs
+```
+
+Она проверяет `APP_ENV`, каталог данных, HTTPS-адреса, форматы Telegram token и
+chat ID, сильный webhook secret и операторские allowlist. Сам `/etc/itagent/env`
+создаётся `install.sh` на сервере и в репозиторий не копируется.
+
+В development worker обрабатывает только `environment=test`. Перед сетевой
+отправкой он проверяет `TELEGRAM_TEST_USER_IDS` и private recipient: рабочая
+production-очередь локальным процессом не claim-ится, а тестовый адресат вне
+allowlist блокируется без вызова Telegram API. Это ограничение действует и
+для test-очереди в production.
+
+Mini App открывается по адресу `/miniapp`. При первом открытии она отправляет
+на `/api/telegram/miniapp/session` только сырой `Telegram.WebApp.initData`;
+сервер проверяет подпись, `auth_date` и список тестовых пользователей, затем
+выдаёт короткую HttpOnly-сессию. В development/staging вход разрешён только
+ID из `TELEGRAM_TEST_USER_IDS` или `TELEGRAM_OPERATOR_IDS`; в production
+список тестовых ID не используется как единственный способ доступа.
+
+После публикации один раз настройте меню общего бота (команда выполняется на
+сервере с production-переменными):
+
+```bash
+node deploy/setup-telegram-miniapp.mjs
+```
+
+Скрипт задаёт клиентское меню и кнопку Mini App по умолчанию. Для
+`TELEGRAM_OPERATOR_CHAT_ID` он задаёт chat-scoped меню команд, поэтому личный
+чат оператора сохраняет `/admin` и не получает клиентскую кнопку. Перед
+сетевым вызовом конфигурацию можно проверить так:
+
+```bash
+node deploy/setup-telegram-miniapp.mjs --dry-run
+```
+
+Для нового маршрута сайта в личный чат оператора сначала задайте
+`TELEGRAM_OPERATOR_IDS` и подтверждённый private `TELEGRAM_OPERATOR_CHAT_ID`,
+проверьте тестовую заявку и только после этого включите
+`TELEGRAM_OPERATOR_NOTIFICATIONS=true`. Пока флаг выключен либо операторский
+чат не настроен, форма продолжает работать через `TELEGRAM_CHAT_ID`.
+
+Подробное описание меню оператора, проверки Telegram ID, внутренних заметок и
+разделения клиентского и операторского режимов: `docs/TELEGRAM_OPERATOR_GUIDE.md`.
 
 Файл `.env` в рабочем каталоге процесса **подхватывается** — но только
 для тех переменных, которых в окружении ещё нет. Заданное процессу всегда
@@ -170,6 +338,16 @@ sqlite3 /var/lib/itagent/content.db "VACUUM INTO '/tmp/content-backup.db'"
 tar czf backup-$(date +%F).tar.gz -C /tmp content-backup.db -C /var/lib/itagent media
 ```
 
+Перед миграцией можно создать именованный архив:
+
+```bash
+DATA_DIR=/var/lib/itagent BACKUP_DIR=/var/backups/itagent \
+  bash deploy/backup-before-migration.sh
+```
+
+Скрипт использует `VACUUM INTO`, включает базу и каталог `media`, а исходные
+данные не удаляет.
+
 Проверьте восстановление хотя бы один раз: копия, которую ни разу
 не разворачивали, — это не резервная копия, а надежда на неё.
 
@@ -226,7 +404,8 @@ systemctl restart itagent
 | ---------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | база на сервере в России                 | **хостинг в РФ** из реестра РКН — выбирается руками, код не проверит                                                                                            |
 | соединение по HTTPS                      | nginx + сертификат (см. «Админка»)                                                                                                                              |
-| заявки не дольше 3 лет                   | `purgeExpiredLeads` — при каждой новой заявке                                                                                                                   |
+| заявки не дольше 3 лет                   | `purgeExpiredLeads` — при старте сервера, далее раз в сутки и при каждой новой заявке                                                                             |
+| Telegram ID и переписка не дольше 3 лет | `purgeExpiredTelegramData` — старые сообщения, неактивные диалоги и профили без обращений; служебные таблицы имеют более короткие сроки                          |
 | журналы не дольше 30 дней                | logrotate у nginx + `MaxRetentionSec=30day` у journald (ниже)                                                                                                   |
 | ежедневная копия, хранится 30 дней       | `deploy/itagent-backup.timer`; снимки перед выкладкой (`release.sh`) — по тому же правилу                                                                       |
 | оператор — конкретное лицо               | админка → Разделы → «Оператор данных»: ФИО, статус, ИНН                                                                                                         |
@@ -253,10 +432,11 @@ systemctl restart itagent
 сменить пароль админки и перевыпустить токен бота.
 
 **При отзыве согласия** (человек написал «удалите мои данные»): открыть
-заявку в админке и удалить её — это затирает запись в базе; затем удалить
-уведомление о ней из чата Telegram руками — туда автоматика не дотянется.
-Срок — 30 дней с момента получения письма, обещано в разделе 5 политики.
-Из резервных копий запись уйдёт сама через 30 дней вместе с копией.
+заявку в админке и удалить её — это затирает заявку, связанную локальную
+Telegram-историю, файлы и карточку диалога; затем удалить уведомление о ней
+из чата Telegram руками — туда автоматика не дотянется. Срок — 30 дней с
+момента получения письма, обещано в разделе 5 политики. Из резервных копий
+запись уйдёт сама через 30 дней вместе с копией.
 
 **Telegram — это передача за границу.** Уведомление с именем и контактом
 уходит на серверы Telegram, и политика честно об этом говорит. По ч. 3

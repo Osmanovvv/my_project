@@ -31,10 +31,16 @@ ExecStart=/usr/bin/node /srv/itagent/.output/server/index.mjs
 # root:itagent). Не здесь: файлы юнитов читает любой пользователь системы,
 # токен бота в них — утечка. Состав файла:
 #   PORT=3000
+#   APP_ENV=production
 #   DATA_DIR=/var/lib/itagent      ← заявки, кейсы, фотографии; вне каталога приложения
 #   ADMIN_PASSWORD=…               ← читается только при первом запуске, потом хранится хешем
+#   TELEGRAM_DELIVERY_ENABLED=true
 #   TELEGRAM_BOT_TOKEN=…           ← без них заявки сохраняются, но в чат не приходят
 #   TELEGRAM_CHAT_ID=…
+#   TELEGRAM_OPERATOR_IDS=…        ← разрешённые user ID через запятую
+#   TELEGRAM_OPERATOR_CHAT_ID=…    ← личный чат оператора
+#   TELEGRAM_TEST_USER_IDS=…       ← разрешённые тестовые user ID
+#   TELEGRAM_WEBHOOK_SECRET=…      ← отдельный секрет входящего webhook
 # После правки файла: systemctl restart itagent
 EnvironmentFile=/etc/itagent/env
 

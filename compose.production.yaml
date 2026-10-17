@@ -1,0 +1,8 @@
+# Server override. Keep secrets in the untracked .env.docker file.
+# HTTPS, Nginx and external backups are configured outside this container.
+
+services:
+  app:
+    environment:
+      APP_ENV: production
+      TELEGRAM_DELIVERY_ENABLED: "true"

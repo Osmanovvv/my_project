@@ -1,0 +1,26 @@
+name: itagent
+
+services:
+  app:
+    build:
+      context: .
+      args:
+        VITE_SITE_URL: ${VITE_SITE_URL:-http://localhost:3000}
+    env_file:
+      - path: .env.docker
+        required: false
+    environment:
+      APP_ENV: ${APP_ENV:-development}
+      HOST: 0.0.0.0
+      PORT: 3000
+      DATA_DIR: /var/lib/itagent
+      TELEGRAM_DELIVERY_ENABLED: ${TELEGRAM_DELIVERY_ENABLED:-false}
+      VITE_SITE_URL: ${VITE_SITE_URL:-http://localhost:3000}
+    ports:
+      - "${ITAGENT_PORT:-3000}:3000"
+    volumes:
+      - itagent-data:/var/lib/itagent
+    restart: unless-stopped
+
+volumes:
+  itagent-data:

@@ -1,0 +1,7 @@
+# Safe staging override. Telegram delivery stays disabled until a dedicated
+# staging bot and allowlisted test user are deliberately configured.
+services:
+  app:
+    environment:
+      APP_ENV: staging
+      TELEGRAM_DELIVERY_ENABLED: ${TELEGRAM_DELIVERY_ENABLED:-false}
